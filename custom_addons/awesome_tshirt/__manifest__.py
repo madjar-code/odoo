@@ -9,33 +9,31 @@
         This app helps you to manage a business of printing customized t-shirts
         for online customers. It offers a public page allowing customers to make
         t-shirt orders.
-
-        Note that this is just a toy app intended to learn the javascript
-        framework.
     """,
 
     'author': "Odoo",
-    'website': "https://www.odoo.com/",
-
-    'category': 'Productivity',
-    'version': '0.1',
+    'category': 'Technical',
+    'version': '1',
     'application': True,
-    'installable': True,
+    # 'installable': True,
 
-
-    'depends': ['base', 'web', 'mail',],
+    'depends': (
+        'base',
+        'web',
+        'mail',
+    ),
 
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
     ],
-    # 'demo': [
-    #     'demo/demo.xml',
-    # ],
-    'assets': {
-        'web.assets_backend': [
-            'awesome_tshirt/static/src/**/*',
-        ],
-    },
+    'demo': [
+        'demo/demo.xml',
+    ],
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'awesome_tshirt/static/src/**/*',
+    #     ],
+    # },
 }

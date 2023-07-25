@@ -22,7 +22,7 @@
                 <field name="is_late"/>
               </group>
               <group>
-                <field name="image_url"/>
+                <field name="image"/>
               </group>
             </group>
           </sheet>
@@ -43,7 +43,7 @@
             <field name="customer_id"/>
             <field name="size"/>
             <field name="quantity"/>
-            <field name="image_url"/>
+            <field name="image"/>
           </group>
         </form>
       </field>
@@ -54,10 +54,12 @@
       <field name="model">awesome_tshirt.order</field>
       <field name="arch" type="xml">
         <kanban default_group_by="state" class="o_kanban_small_column" on_create="quick_create" quick_create_view="awesome_tshirt.orders_form_view_simplified">
-          <field name="customer_id"/>
+          <field name="customer_id" options="{'editable': 'top'}" field="oe_edit_only"/>
+          <field name="size" options="{'editable': 'top'}" field="oe_edit_only"/>
+          <field name="quantity" options="{'editable': 'top'}" field="oe_edit_only"/>
           <templates>
             <t t-name="kanban-box">
-              <div t-attf-class="oe_kanban_global_click">
+              <div>
                 <div>Customer: <field name="customer_id"/></div>
                 <div>Size: <field name="size"/></div>
                 <div>Quantity: <field name="quantity"/></div>

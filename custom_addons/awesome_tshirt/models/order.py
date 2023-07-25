@@ -22,7 +22,7 @@ class TShirtOrder(models.Model):
 
     amount = fields.Float('Amount', compute='_compute_amount', store=True)
     customer_id = fields.Many2one('res.partner', string="Customer")
-    image_url = fields.Char('Image', help="encodes the url of the image")
+    image = fields.Binary('Image', help="The image of the T-shirt")
     is_late = fields.Boolean('Is late', compute='_compute_is_late')
     quantity = fields.Integer('Quantity', default="1")
     created_date = fields.Date('Created Date')
