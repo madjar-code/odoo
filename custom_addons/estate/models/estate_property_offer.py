@@ -17,7 +17,6 @@ class EstatePropertyOffer(models.Model):
     # -------------------------- Fields Declaration ----------------------
     # Basic
     price = fields.Float('Price', required=True)
-    
     validity = fields.Integer(string='Validity (days)', default=7)
 
     # Special
@@ -33,7 +32,7 @@ class EstatePropertyOffer(models.Model):
 
     # Relational
     property_id = fields.Many2one('estate.property', string='Property', required=True)
-    partner_id = fields.Many2One('res.partner', string='Partner', required=True)
+    partner_id = fields.Many2one('res.partner', string='Partner', required=True)
 
     # For stat button
     property_type_id = fields.Many2one(

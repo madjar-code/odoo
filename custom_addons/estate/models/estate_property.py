@@ -29,7 +29,7 @@ class EstateProperty(models.Model):
     description = fields.Text('Description')
     postcode = fields.Char('Postcode')
     date_availability = fields.Date(
-        'Available From', default=_default_date_availability(), copy=False)
+        'Available From', default=_default_date_availability, copy=False)
     expected_price = fields.Float('Expected Price', required=True)
     selling_price = fields.Float('Selling Price', copy=False, readonly=True)
     bedrooms = fields.Integer('Bedrooms', default=2)
@@ -70,7 +70,7 @@ class EstateProperty(models.Model):
     user_id = fields.Many2one('res.users', string='Salesman', default=lambda self: self.env.user)
     byuer_id = fields.Many2one('res.partner', string='Buyer', readonly=True, copy=False)
     tag_ids = fields.Many2many('estate.property.tag', string='Tags')
-    offerd_ids = fields.One2many('estate.property.offer', 'property_id', string='Offers')
+    offer_ids = fields.One2many('estate.property.offer', 'property_id', string='Offers')
 
     # Computed
     total_area = fields.Integer('Total Area (sql)', compute='_compute_total_area',
@@ -92,7 +92,7 @@ class EstateProperty(models.Model):
 
 
     # ----------------------- Constraints and Onchanges ----------------------
-    @api.constraints('expected_price', 'selling_price')
+    @api.depends('expected_price', 'selling_price')
     def _check_price_difference(self):
         for prop in self:
             if (
