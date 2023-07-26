@@ -1,0 +1,4 @@
+<odoo>
+    <record id='estate_property_view_form' model='ir.ui.view'>
+    </record>
+</odoo>
