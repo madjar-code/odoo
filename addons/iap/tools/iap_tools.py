@@ -67,6 +67,22 @@ _MAIL_DOMAIN_BLACKLIST = set([
     'example.com',
 ])
 
+DEFAULT_ENRICHMENT_DATA = {
+    'lead_id1': {
+        'name': 'Default Company 1',
+        'website': 'https://www.defaultcompany1.com',
+        'industry': 'Default Industry 1',
+        # Add other fields as needed
+    },
+    'lead_id2': {
+        'name': 'Default Company 2',
+        'website': 'https://www.defaultcompany2.com',
+        'industry': 'Default Industry 2',
+        # Add other fields as needed
+    },
+    # Add default data for other leads
+}
+
 # List of country codes for which we should offer state filtering when mining new leads.
 # See crm.iap.lead.mining.request#_compute_available_state_ids() or task-2471703 for more details.
 _STATES_FILTER_COUNTRIES_WHITELIST = set([
@@ -127,37 +143,38 @@ def iap_jsonrpc(url, method='call', params=None, timeout=15):
     Calls the provided JSON-RPC endpoint, unwraps the result and
     returns JSON-RPC errors as exceptions.
     """
-    payload = {
-        'jsonrpc': '2.0',
-        'method': method,
-        'params': params,
-        'id': uuid.uuid4().hex,
-    }
+    # payload = {
+    #     'jsonrpc': '2.0',
+    #     'method': method,
+    #     'params': params,
+    #     'id': uuid.uuid4().hex,
+    # }
 
-    _logger.info('iap jsonrpc %s', url)
-    try:
-        req = requests.post(url, json=payload, timeout=timeout)
-        req.raise_for_status()
-        response = req.json()
-        if 'error' in response:
-            name = response['error']['data'].get('name').rpartition('.')[-1]
-            message = response['error']['data'].get('message')
-            if name == 'InsufficientCreditError':
-                e_class = InsufficientCreditError
-            elif name == 'AccessError':
-                e_class = exceptions.AccessError
-            elif name == 'UserError':
-                e_class = exceptions.UserError
-            else:
-                raise requests.exceptions.ConnectionError()
-            e = e_class(message)
-            e.data = response['error']['data']
-            raise e
-        return response.get('result')
-    except (ValueError, requests.exceptions.ConnectionError, requests.exceptions.MissingSchema, requests.exceptions.Timeout, requests.exceptions.HTTPError) as e:
-        raise exceptions.AccessError(
-            _('The url that this service requested returned an error. Please contact the author of the app. The url it tried to contact was %s', url)
-        )
+    # _logger.info('iap jsonrpc %s', url)
+    # try:
+    #     req = requests.post(url, json=payload, timeout=timeout)
+    #     req.raise_for_status()
+    #     response = req.json()
+    #     if 'error' in response:
+    #         name = response['error']['data'].get('name').rpartition('.')[-1]
+    #         message = response['error']['data'].get('message')
+    #         if name == 'InsufficientCreditError':
+    #             e_class = InsufficientCreditError
+    #         elif name == 'AccessError':
+    #             e_class = exceptions.AccessError
+    #         elif name == 'UserError':
+    #             e_class = exceptions.UserError
+    #         else:
+    #             raise requests.exceptions.ConnectionError()
+    #         e = e_class(message)
+    #         e.data = response['error']['data']
+    #         raise e
+    #     return response.get('result')
+    # except (ValueError, requests.exceptions.ConnectionError, requests.exceptions.MissingSchema, requests.exceptions.Timeout, requests.exceptions.HTTPError) as e:
+    #     raise exceptions.AccessError(
+    #         _('The url that this service requested returned an error. Please contact the author of the app. The url it tried to contact was %s', url)
+    #     )
+    return DEFAULT_ENRICHMENT_DATA
 
 #----------------------------------------------------------
 # Helpers for proxy
