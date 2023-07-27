@@ -353,8 +353,6 @@ class TestMailgateway(TestMailCommon):
 
     @mute_logger('odoo.addons.mail.models.mail_thread')
     def test_message_process_followers(self):
-        """ Incoming email: recognized author not archived and not odoobot:
-        added as follower. Also test corner cases: archived, private. """
         partner_archived, partner_private = self.env['res.partner'].create([
             {
                 'active': False,
@@ -409,20 +407,20 @@ class TestMailgateway(TestMailCommon):
                          'message_process: archived partner -> no follower')
 
         # partner_root -> never again
-        odoobot = self.env.ref('base.partner_root')
-        odoobot.active = True
-        odoobot.email = 'odoobot@example.com'
+        erpbot = self.env.ref('base.partner_root')
+        erpbot.active = True
+        erpbot.email = 'erpbot@example.com'
         with self.mock_mail_gateway():
             record4 = self.format_and_process(
-                MAIL_TEMPLATE, odoobot.email_formatted, 'groups@test.com',
-                subject='Odoobot Automatic Answer')
+                MAIL_TEMPLATE, erpbot.email_formatted, 'groups@test.com',
+                subject='ERPBot Automatic Answer')
 
-        self.assertEqual(record4.message_ids[0].author_id, odoobot)
-        self.assertEqual(record4.message_ids[0].email_from, odoobot.email_formatted)
+        self.assertEqual(record4.message_ids[0].author_id, erpbot)
+        self.assertEqual(record4.message_ids[0].email_from, erpbot.email_formatted)
         self.assertEqual(record4.message_follower_ids.partner_id, self.env['res.partner'],
-                         'message_process: odoobot -> no follower')
+                         'message_process: erpbot -> no follower')
         self.assertEqual(record4.message_partner_ids, self.env['res.partner'],
-                         'message_process: odoobot -> no follower')
+                         'message_process: erpbot -> no follower')
 
         # private partner
         with self.mock_mail_gateway():
