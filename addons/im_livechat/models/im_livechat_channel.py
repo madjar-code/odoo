@@ -168,7 +168,7 @@ class ImLivechatChannel(models.Model):
         }
 
     def _open_livechat_mail_channel(self, anonymous_name, previous_operator_id=None, chatbot_script=None, user_id=None, country_id=None, persisted=True):
-        """ Return a livechat session. If the session is persisted, creates a mail.channel record with a connected operator or with Odoobot as
+        """ Return a livechat session. If the session is persisted, creates a mail.channel record with a connected operator or with ERPBot as
             an operator if a chatbot has been configured, or return false otherwise
             :param anonymous_name : the name of the anonymous person of the session
             :param previous_operator_id : partner_id.id of the previous operator that this visitor had in the past

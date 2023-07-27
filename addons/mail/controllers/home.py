@@ -8,7 +8,7 @@ from odoo.addons.web.controllers.home import Home as WebHome
 def _admin_password_warn(uid):
     """ Admin still has `admin` password, flash a message via chatter.
 
-    Uses a private mail.channel from the system (/ odoobot) to the user, as
+    Uses a private mail.channel from the system (/ erpbot) to the user, as
     using a more generic mail.thread could send an email which is undesirable
 
     Uses mail.channel directly because using mail.thread might send an email instead.

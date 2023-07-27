@@ -293,7 +293,7 @@ registerModel({
                 return;
             }
 
-            // Chat from OdooBot is considered disturbing and should only be
+            // Chat from ERPBot is considered disturbing and should only be
             // shown on the menu, but no notification and no thread open.
             const isChatWithOdooBot = (
                 channel.correspondent &&

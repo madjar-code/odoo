@@ -172,7 +172,7 @@ registerModel({
                     (!partner.active && partner !== this.messaging.partnerRoot) ||
                     partner.is_public
                 ) {
-                    // ignore archived partners (except OdooBot), public partners (technical)
+                    // ignore archived partners (except ERPBot), public partners (technical)
                     continue;
                 }
                 if (!partner.name) {

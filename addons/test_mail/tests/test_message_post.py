@@ -618,7 +618,7 @@ class TestMessagePost(TestMessagePostCommon, CronMixinCase):
     @users('employee')
     @mute_logger('odoo.models.unlink')
     def test_message_post_inactive_follower(self):
-        """ Test posting with inactive followers does not notify them (e.g. odoobot) """
+        """ Test posting with inactive followers does not notify them (e.g. erpbot) """
         test_record = self.env['mail.test.simple'].browse(self.test_record.ids)
         test_record._message_subscribe(self.user_employee_2.partner_id.ids)
         self.user_employee_2.write({'active': False})

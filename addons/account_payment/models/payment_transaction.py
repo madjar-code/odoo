@@ -180,7 +180,7 @@ class PaymentTransaction(models.Model):
         :return: None
         """
         self.ensure_one()
-        self = self.with_user(SUPERUSER_ID)  # Log messages as 'OdooBot'
+        self = self.with_user(SUPERUSER_ID)  # Log messages as 'ERPBot'
         if self.source_transaction_id.payment_id:
             self.source_transaction_id.payment_id.message_post(body=message)
             for invoice in self.source_transaction_id.invoice_ids:

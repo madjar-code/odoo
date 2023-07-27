@@ -1177,7 +1177,7 @@ class MailThread(models.AbstractModel):
             if thread._name == 'mail.thread':  # message with parent_id not linked to record
                 new_msg = thread.message_notify(**post_params)
             else:
-                # parsing should find an author independently of user running mail gateway, and ensure it is not odoobot
+                # parsing should find an author independently of user running mail gateway, and ensure it is not erpbot
                 partner_from_found = message_dict.get('author_id') and message_dict['author_id'] != self.env['ir.model.data']._xmlid_to_res_id('base.partner_root')
                 thread = thread.with_context(mail_create_nosubscribe=not partner_from_found)
                 new_msg = thread.message_post(**post_params)
@@ -2034,7 +2034,7 @@ class MailThread(models.AbstractModel):
         self.sudo()._message_set_main_attachment_id(msg_values['attachment_ids'])
 
         if msg_values['author_id'] and msg_values['message_type'] != 'notification' and not self._context.get('mail_create_nosubscribe'):
-            if self.env['res.partner'].browse(msg_values['author_id']).active:  # we dont want to add odoobot/inactive as a follower
+            if self.env['res.partner'].browse(msg_values['author_id']).active:  # we dont want to add erpbot/inactive as a follower
                 self._message_subscribe(partner_ids=[msg_values['author_id']])
 
         self._message_post_after_hook(new_message, msg_values)
