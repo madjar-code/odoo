@@ -16,7 +16,7 @@ class TestImLivechatMessage(TransactionCase):
                 'login': 'emp',
                 'name': 'Ernest Employee',
                 'notification_type': 'inbox',
-                'odoobot_state': 'disabled',
+                'erpbot_state': 'disabled',
                 'signature': '--\nErnest',
             },
             {'name': 'test1', 'login': 'test1', 'email': 'test1@example.com'},

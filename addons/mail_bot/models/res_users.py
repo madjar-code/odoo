@@ -6,7 +6,7 @@ from odoo import models, fields, _
 class Users(models.Model):
     _inherit = 'res.users'
 
-    odoobot_state = fields.Selection(
+    erpbot_state = fields.Selection(
         [
             ('not_initialized', 'Not initialized'),
             ('onboarding_emoji', 'Onboarding emoji'),
@@ -20,10 +20,10 @@ class Users(models.Model):
 
     @property
     def SELF_READABLE_FIELDS(self):
-        return super().SELF_READABLE_FIELDS + ['odoobot_state']
+        return super().SELF_READABLE_FIELDS + ['erpbot_state']
 
     def _init_messaging(self):
-        if self.odoobot_state in [False, 'not_initialized'] and self._is_internal():
+        if self.erpbot_state in [False, 'not_initialized'] and self._is_internal():
             self._init_odoobot()
         return super()._init_messaging()
 
@@ -34,5 +34,5 @@ class Users(models.Model):
         channel = self.env['mail.channel'].browse(channel_info['id'])
         message = _("Hello,<br/>Odoo's chat helps employees collaborate efficiently. I'm here to help you discover its features.<br/><b>Try to send me an emoji</b> <span class=\"o_odoobot_command\">:)</span>")
         channel.sudo().message_post(body=message, author_id=odoobot_id, message_type="comment", subtype_xmlid="mail.mt_comment")
-        self.sudo().odoobot_state = 'onboarding_emoji'
+        self.sudo().erpbot_state = 'onboarding_emoji'
         return channel
