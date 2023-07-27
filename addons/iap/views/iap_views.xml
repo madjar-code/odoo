@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- <?xml version="1.0" encoding="utf-8"?> -->
 <odoo>
 
     <!-- iap Client Account Views -->
-    <record id="iap_account_view_form" model="ir.ui.view">
+    <!-- <record id="iap_account_view_form" model="ir.ui.view">
         <field name="name">iap.account.form</field>
         <field name="model">iap.account</field>
         <field name="arch" type="xml">
@@ -16,8 +16,8 @@
                 </sheet>
             </form>
         </field>
-    </record>
-    <record id="iap_account_view_tree" model="ir.ui.view">
+    </record> -->
+    <!-- <record id="iap_account_view_tree" model="ir.ui.view">
         <field name="name">iap.account.tree</field>
         <field name="model">iap.account</field>
         <field name="arch" type="xml">
@@ -27,16 +27,16 @@
                 <field name="account_token" readonly="1"/>
             </tree>
         </field>
-    </record>
+    </record> -->
     <!-- Actions -->
-    <record id="iap_account_action" model="ir.actions.act_window">
+    <!-- <record id="iap_account_action" model="ir.actions.act_window">
         <field name="name">IAP Account</field>
         <field name="res_model">iap.account</field>
         <field name='view_mode'>tree,form</field>
-    </record>
+    </record> -->
 
     <!-- Menus -->
-    <menuitem
+    <!-- <menuitem
         id="iap_root_menu"
         name="IAP"
         parent="base.menu_custom"
@@ -47,6 +47,6 @@
         name="IAP Accounts"
         parent="iap_root_menu"
         action="iap_account_action"
-        sequence="10"/>
+        sequence="10"/> -->
 
 </odoo>
