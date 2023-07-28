@@ -15,18 +15,18 @@
             }
         }
         @keyframes rotate {
-            0% {
+            /* 0% {
                 transform: rotate(0deg);
             }
             100% {
                 transform: rotate(360deg);
-            }
+            } */
         }
         svg {
             animation: rotate 1s linear infinite;
         }
         circle {
-            stroke-dasharray: 120, 120;
+            /* stroke-dasharray: 120, 120; */
             animation: dash 2.5s ease infinite;
         }
     </style>
