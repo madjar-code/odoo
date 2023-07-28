@@ -4,7 +4,7 @@
     <record id="base.partner_root" model="res.partner">
         <field name="name">ERPBot</field>
         <field name="email">erpboot@example.com</field>
-        <field name="image_1920" type="base64" file="mail/static/src/img/odoobot.png"/>
+        <field name="image_1920" type="base64" file="mail/static/src/img/erpbot.jpeg"/>
     </record>
 
     <!-- user root should not receive emails at creation -->
