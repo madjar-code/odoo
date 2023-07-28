@@ -21,12 +21,12 @@ class Users(models.Model):
 
     notification_type = fields.Selection([
         ('email', 'Handle by Emails'),
-        ('inbox', 'Handle in Odoo')],
+        ('inbox', 'Handle in ERP')],
         'Notification', required=True, default='email',
         compute='_compute_notification_type', store=True, readonly=False,
         help="Policy on how to handle Chatter notifications:\n"
              "- Handle by Emails: notifications are sent to your email address\n"
-             "- Handle in Odoo: notifications appear in your Odoo Inbox")
+             "- Handle in ERP: notifications appear in your ERP Inbox")
     res_users_settings_ids = fields.One2many('res.users.settings', 'user_id')
     # Provide a target for relateds that is not a x2Many field.
     res_users_settings_id = fields.Many2one('res.users.settings', string="Settings", compute='_compute_res_users_settings_id', search='_search_res_users_settings_id')
@@ -34,7 +34,7 @@ class Users(models.Model):
     _sql_constraints = [(
         "notification_type",
         "CHECK (notification_type = 'email' OR NOT share)",
-        "Only internal user can receive notifications in Odoo",
+        "Only internal user can receive notifications in ERP",
     )]
 
     @api.depends('share')
