@@ -101,9 +101,9 @@
         <a t-if="company.website" t-att-href="'%s' % company.website" style="text-decoration:none; color: #999999;" t-out="company.website"/>
     </p>
 </div>
-<p style="color: #555555; font-size:11px;">
+<!-- <p style="color: #555555; font-size:11px;">
     Powered by <a target="_blank" href="https://www.odoo.com?utm_source=db&amp;utm_medium=email" style="color: #875A7B;">Odoo</a>
-</p>
+</p> -->
 </div>
 </body></html>
         </template>
@@ -171,9 +171,9 @@
 </table>
 </td></tr>
 <!-- POWERED BY -->
-<tr><td align="center" style="min-width: 590px;">
+<!-- <tr><td align="center" style="min-width: 590px;">
         Powered by <a target="_blank" href="https://www.odoo.com?utm_source=db&amp;utm_medium=email" style="color: #875A7B;">Odoo</a>
-</td></tr>
+</td></tr> -->
 </table>
 </body>
 </html>
