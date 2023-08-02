@@ -1,1 +1,1 @@
-from . import form
+from .form import SteponeForm
