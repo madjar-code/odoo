@@ -1,1 +1,1 @@
-from .schemas import Lead
+from .schemas import Lead, LeadFormSchema

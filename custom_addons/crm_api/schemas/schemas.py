@@ -1,5 +1,4 @@
 from typing import (
-    Dict,
     Optional,
 )
 from pydantic import (
@@ -8,16 +7,12 @@ from pydantic import (
     EmailStr,
     constr,
 )
-
-
-class PropertyForm(BaseModel):
-    name: str
-    values: Dict[str, str]
+from ...stepone.schemas.form import SteponeForm
 
 
 class Lead(BaseModel):
     name: str
-    website: HttpUrl
+    website: str
     email_from: EmailStr
     phone: constr(min_length=10, max_length=15)
     company_id: Optional[int]
@@ -25,7 +20,8 @@ class Lead(BaseModel):
     country_id: Optional[int]
     team_id: Optional[int]
     city: str
-    # form: PropertyForm
 
-    # class Config:
-    #     from_attributes = True
+
+class LeadFormSchema(BaseModel):
+    lead: Lead
+    form: SteponeForm
