@@ -6,6 +6,12 @@
     "depends": (
         'fastapi',
     ),
+    'external_dependencies': {
+        'python': (
+            'fastapi',
+            'pydantic',
+        )
+    },
     'installable': True,
     'application': True,
 }
