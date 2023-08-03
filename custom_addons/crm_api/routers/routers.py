@@ -10,6 +10,7 @@ from odoo.addons.fastapi.dependencies import odoo_env
 from ..schemas import (
     LeadSteponeFormSchema,
     LeadQuestionFormSchema,
+    LeadInstantFormSchema,
 )
 
 
@@ -19,6 +20,7 @@ router = APIRouter(tags=['crm_lead'])
 TABLE_MAPPING = {
     'SteponeForm': 'stepone.form',
     'QuestionForm': 'question.form',
+    'InstantForm': 'instant.form',
 }
 
 
@@ -59,3 +61,11 @@ async def create_lead(
         env: Annotated[Environment, Depends(odoo_env)],
     ):
     return create_validate_lead_form(lead_form, 'QuestionForm', env)
+
+
+@router.post('/crm_lead/instant-form/')
+async def create_lead(
+        lead_form: LeadInstantFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    return create_validate_lead_form(lead_form, 'InstantForm', env)

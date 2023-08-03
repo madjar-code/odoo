@@ -12,6 +12,7 @@ from pydantic import (
 )
 from ...stepone.schemas.form import SteponeForm
 from ...question.schemas.form import QuestionForm
+from ...instant.schemas.form import InstantForm
 
 
 class Lead(BaseModel):
@@ -41,3 +42,8 @@ class LeadSteponeFormSchema(BaseModel):
 class LeadQuestionFormSchema(BaseModel):
     lead: Lead
     form: QuestionForm
+
+
+class LeadInstantFormSchema(BaseModel):
+    lead: Lead
+    form: InstantForm
