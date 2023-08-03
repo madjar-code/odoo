@@ -77,27 +77,18 @@ class RequestQuoteForm(BaseModel):
        use_enum_values = True
 
 
+class RateChoice(str, Enum):
+    one = '1'
+    two = '2'
+    three = '3'
+    four = '4'
+    five = '5'
+    six = '6'
+    seven = '7'
+    eight = '8'
+    nine = '9'
+    ten = '10'
+
+
 class ReviewForm(BaseModel):
-    RATE_CHOICES: ClassVar[list] = [
-        ('1', '1'),
-        ('2', '2'),
-        ('3', '3'),
-        ('4', '4'),
-        ('5', '5'),
-        ('6', '6'),
-        ('7', '7'),
-        ('8', '8'),
-        ('9', '9'),
-        ('10', '10'),
-    ]
-
-    rate: constr(min_length=1, max_length=2)
-
-    class Config:
-        use_enum_values = True
-
-    @validator('rate')
-    def validate_rate(cls, rate):
-        if rate not in [choice[0] for choice in cls.RATE_CHOICES]:
-            raise ValueError('Invalid rate value. Must be between 1 and 10.')
-        return rate
+    rate: RateChoice
