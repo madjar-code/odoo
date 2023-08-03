@@ -7,6 +7,7 @@ from pydantic import (
     EmailStr,
     constr,
     validator,
+    create_model,
 )
 from ...stepone.schemas.form import SteponeForm
 from ...question.schemas.form import QuestionForm
@@ -35,31 +36,13 @@ class Lead(BaseModel):
         return url
 
 
-class LeadSteponeFormSchema(BaseModel):
-    lead: Lead
-    form: SteponeForm
+def create_lead_form_schema(form_schema: BaseModel):
+    return create_model('LeadFormSchema', lead=(Lead, ...), form=(form_schema, ...))
 
 
-class LeadQuestionFormSchema(BaseModel):
-    lead: Lead
-    form: QuestionForm
-
-
-class LeadInstantFormSchema(BaseModel):
-    lead: Lead
-    form: InstantForm
-
-
-class LeadReviewFormSchema(BaseModel):
-    lead: Lead
-    form: ReviewForm
-
-
-class LeadRequestQuoteFormSchema(BaseModel):
-    lead: Lead
-    form: RequestQuoteForm
-
-
-class LeadDefaultContactFormSchema(BaseModel):
-    lead: Lead
-    form: DefaultContactForm
+LeadSteponeFormSchema = create_lead_form_schema(SteponeForm)
+LeadQuestionFormSchema = create_lead_form_schema(QuestionForm)
+LeadInstantFormSchema = create_lead_form_schema(InstantForm)
+LeadReviewFormSchema = create_lead_form_schema(ReviewForm)
+LeadRequestQuoteFormSchema = create_lead_form_schema(RequestQuoteForm)
+LeadDefaultContactFormSchema = create_lead_form_schema(DefaultContactForm)
