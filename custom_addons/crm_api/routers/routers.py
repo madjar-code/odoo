@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Annotated
 from fastapi import (
     APIRouter,
@@ -16,31 +15,12 @@ from ..schemas import (
     LeadDefaultContactFormSchema,
 )
 
+API_PREFIX = '/crm-lead'
 
 router = APIRouter(tags=['crm_lead'])
 
-
-TABLE_MAPPING = {
-    'SteponeForm': 'stepone.form',
-    'QuestionForm': 'question.form',
-    'InstantForm': 'instant.form',
-    'ReviewForm': 'review.form',
-    'RequestQuoteForm': 'request.quote.form',
-    'DefaultContactForm': 'default.form',
-}
-
-
-def create_validate_lead_form(
-        lead_form,
-        table_key: str,
-        env: Annotated[Environment, Depends(odoo_env)]
-    ):
-    try:
-        form_table_name = TABLE_MAPPING[table_key]
-        form_table = env[form_table_name]
-    except KeyError:
-        raise HTTPException(status_code=403, detail='Incorrect table name')
-    lead_form_data = lead_form.model_dump(by_alias=True)
+def create_validate_lead_form(lead_form_schema, form_table, env):
+    lead_form_data = lead_form_schema.model_dump(by_alias=True)
     crm_lead = env['crm.lead']
     try:
         with env.cr.savepoint():
@@ -54,48 +34,55 @@ def create_validate_lead_form(
     return {'message': 'OK!'}
 
 
-@router.post('/crm_lead/stepone-form/')
-async def create_lead(
+@router.post(f'{API_PREFIX}/stepone-form/')
+async def create_lead_stepone(
         lead_form: LeadSteponeFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    return create_validate_lead_form(lead_form, 'SteponeForm', env)
+    form_table = env['stepone.form']
+    return create_validate_lead_form(lead_form, form_table, env)
 
 
-@router.post('/crm_lead/question-form/')
-async def create_lead(
+@router.post(f'{API_PREFIX}/question-form/')
+async def create_lead_question(
         lead_form: LeadQuestionFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    return create_validate_lead_form(lead_form, 'QuestionForm', env)
+    form_table = env['question.form']
+    return create_validate_lead_form(lead_form, form_table, env)
 
 
-@router.post('/crm_lead/instant-form/')
-async def create_lead(
+@router.post(f'{API_PREFIX}/instant-form/')
+async def create_lead_instant(
         lead_form: LeadInstantFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    return create_validate_lead_form(lead_form, 'InstantForm', env)
+    form_table = env['instant.form']
+    return create_validate_lead_form(lead_form, form_table, env)
 
 
-@router.post('/crm_lead/review-form/')
-async def create_lead(
+@router.post(f'{API_PREFIX}/review-form/')
+async def create_lead_review(
         lead_form: LeadReviewFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    return create_validate_lead_form(lead_form, 'ReviewForm', env)
+    form_table = env['review.form']
+    return create_validate_lead_form(lead_form, form_table, env)
 
 
-@router.post('/crm_lead/request-quote-form/')
-async def create_lead(
+@router.post(f'{API_PREFIX}/request-quote-form/')
+async def create_lead_request_quote(
         lead_form: LeadRequestQuoteFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    return create_validate_lead_form(lead_form, 'RequestQuoteForm', env)
+    form_table = env['request.quote.form']
+    return create_validate_lead_form(lead_form, form_table, env)
 
-@router.post('/crm_lead/default-form/')
-async def create_lead(
+
+@router.post(f'{API_PREFIX}/default-form/')
+async def create_lead_default(
         lead_form: LeadDefaultContactFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    return create_validate_lead_form(lead_form, 'DefaultContactForm', env)
+    form_table = env['default.form']
+    return create_validate_lead_form(lead_form, form_table, env)
