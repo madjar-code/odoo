@@ -13,6 +13,7 @@ from ...question.schemas.form import QuestionForm
 from ...instant.schemas.form import InstantForm
 from ...review.schemas.form import ReviewForm
 from ...request_quote.schemas.form import RequestQuoteForm
+from ...default_contact_form.schemas.form import DefaultContactForm
 
 
 class Lead(BaseModel):
@@ -57,3 +58,8 @@ class LeadReviewFormSchema(BaseModel):
 class LeadRequestQuoteFormSchema(BaseModel):
     lead: Lead
     form: RequestQuoteForm
+
+
+class LeadDefaultContactFormSchema(BaseModel):
+    lead: Lead
+    form: DefaultContactForm

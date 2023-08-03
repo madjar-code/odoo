@@ -13,6 +13,7 @@ from ..schemas import (
     LeadInstantFormSchema,
     LeadReviewFormSchema,
     LeadRequestQuoteFormSchema,
+    LeadDefaultContactFormSchema,
 )
 
 
@@ -25,6 +26,7 @@ TABLE_MAPPING = {
     'InstantForm': 'instant.form',
     'ReviewForm': 'review.form',
     'RequestQuoteForm': 'request.quote.form',
+    'DefaultContactForm': 'default.form',
 }
 
 
@@ -90,3 +92,10 @@ async def create_lead(
         env: Annotated[Environment, Depends(odoo_env)],
     ):
     return create_validate_lead_form(lead_form, 'RequestQuoteForm', env)
+
+@router.post('/crm_lead/default-form/')
+async def create_lead(
+        lead_form: LeadDefaultContactFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    return create_validate_lead_form(lead_form, 'DefaultContactForm', env)
