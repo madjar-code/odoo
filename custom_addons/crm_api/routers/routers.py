@@ -22,16 +22,16 @@ TABLE_MAPPING = {
 }
 
 
-@router.post('/crm_lead/stepone-form/')
-async def create_lead(
-        lead_form: LeadSteponeFormSchema,
-        env: Annotated[Environment, Depends(odoo_env)],
+def create_validate_lead_form(
+        lead_form,
+        table_key: str,
+        env: Annotated[Environment, Depends(odoo_env)]
     ):
     try:
-        form_table_name = TABLE_MAPPING['SteponeForm']
+        form_table_name = TABLE_MAPPING[table_key]
         form_table = env[form_table_name]
     except KeyError:
-        raise HTTPException(status_code=403, detail='Incorrect form name')
+        raise HTTPException(status_code=403, detail='Incorrect table name')
     lead_form_data = lead_form.model_dump(by_alias=True)
     crm_lead = env['crm.lead']
     try:
@@ -40,10 +40,17 @@ async def create_lead(
             form_data = lead_form_data['form']
             form_data['lead_id'] = lead_obj.id
             form_table.sudo().create(form_data)
-    except Exception as e:
-        print(e)
+    except Exception:
         raise HTTPException(status_code=422, detail='Something went wrong')
     return {'message': 'OK!'}
+
+
+@router.post('/crm_lead/stepone-form/')
+async def create_lead(
+        lead_form: LeadSteponeFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    return create_validate_lead_form(lead_form, 'SteponeForm', env)
 
 
 @router.post('/crm_lead/question-form/')
@@ -51,20 +58,4 @@ async def create_lead(
         lead_form: LeadQuestionFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    try:
-        form_table_name = TABLE_MAPPING['QuestionForm']
-        form_table = env[form_table_name]
-    except KeyError:
-        raise HTTPException(status_code=403, detail='Incorrect form name')
-    lead_form_data = lead_form.model_dump(by_alias=True)
-    crm_lead = env['crm.lead']
-    try:
-        with env.cr.savepoint():
-            lead_obj = crm_lead.sudo().create(lead_form_data['lead'])
-            form_data = lead_form_data['form']
-            form_data['lead_id'] = lead_obj.id
-            form_table.sudo().create(form_data)
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=422, detail='Something went wrong')
-    return {'message': 'OK!'}
+    return create_validate_lead_form(lead_form, 'QuestionForm', env)
