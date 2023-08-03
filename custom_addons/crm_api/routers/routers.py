@@ -11,6 +11,7 @@ from ..schemas import (
     LeadSteponeFormSchema,
     LeadQuestionFormSchema,
     LeadInstantFormSchema,
+    LeadReviewFormSchema,
 )
 
 
@@ -21,6 +22,7 @@ TABLE_MAPPING = {
     'SteponeForm': 'stepone.form',
     'QuestionForm': 'question.form',
     'InstantForm': 'instant.form',
+    'ReviewForm': 'review.form',
 }
 
 
@@ -69,3 +71,11 @@ async def create_lead(
         env: Annotated[Environment, Depends(odoo_env)],
     ):
     return create_validate_lead_form(lead_form, 'InstantForm', env)
+
+
+@router.post('/crm_lead/review-form/')
+async def create_lead(
+        lead_form: LeadReviewFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    return create_validate_lead_form(lead_form, 'ReviewForm', env)

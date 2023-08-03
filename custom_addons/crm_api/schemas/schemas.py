@@ -1,11 +1,9 @@
 import re
 from typing import (
     Optional,
-    Union,
 )
 from pydantic import (
     BaseModel,
-    create_model,
     EmailStr,
     constr,
     validator,
@@ -13,6 +11,7 @@ from pydantic import (
 from ...stepone.schemas.form import SteponeForm
 from ...question.schemas.form import QuestionForm
 from ...instant.schemas.form import InstantForm
+from ...review.schemas.form import ReviewForm
 
 
 class Lead(BaseModel):
@@ -47,3 +46,8 @@ class LeadQuestionFormSchema(BaseModel):
 class LeadInstantFormSchema(BaseModel):
     lead: Lead
     form: InstantForm
+
+
+class LeadReviewFormSchema(BaseModel):
+    lead: Lead
+    form: ReviewForm

@@ -3,4 +3,5 @@ from .schemas import (
     LeadSteponeFormSchema,
     LeadQuestionFormSchema,
     LeadInstantFormSchema,
+    LeadReviewFormSchema,
 )
