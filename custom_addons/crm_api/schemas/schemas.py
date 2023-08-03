@@ -9,12 +9,14 @@ from pydantic import (
     validator,
     create_model,
 )
-from ...stepone.schemas.form import SteponeForm
-from ...question.schemas.form import QuestionForm
-from ...instant.schemas.form import InstantForm
-from ...review.schemas.form import ReviewForm
-from ...request_quote.schemas.form import RequestQuoteForm
-from ...default_contact_form.schemas.form import DefaultContactForm
+from ...stepone.schemas.forms import (
+    SteponeForm,
+    DefaultContactForm,
+    InstantForm,
+    QuestionForm,
+    RequestQuoteForm,
+    ReviewForm,
+)
 
 
 class Lead(BaseModel):
