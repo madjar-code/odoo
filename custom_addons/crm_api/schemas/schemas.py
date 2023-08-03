@@ -12,6 +12,7 @@ from ...stepone.schemas.form import SteponeForm
 from ...question.schemas.form import QuestionForm
 from ...instant.schemas.form import InstantForm
 from ...review.schemas.form import ReviewForm
+from ...request_quote.schemas.form import RequestQuoteForm
 
 
 class Lead(BaseModel):
@@ -51,3 +52,8 @@ class LeadInstantFormSchema(BaseModel):
 class LeadReviewFormSchema(BaseModel):
     lead: Lead
     form: ReviewForm
+
+
+class LeadRequestQuoteFormSchema(BaseModel):
+    lead: Lead
+    form: RequestQuoteForm

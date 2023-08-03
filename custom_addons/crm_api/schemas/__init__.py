@@ -4,4 +4,5 @@ from .schemas import (
     LeadQuestionFormSchema,
     LeadInstantFormSchema,
     LeadReviewFormSchema,
+    LeadRequestQuoteFormSchema,
 )

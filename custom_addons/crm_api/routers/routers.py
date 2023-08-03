@@ -12,6 +12,7 @@ from ..schemas import (
     LeadQuestionFormSchema,
     LeadInstantFormSchema,
     LeadReviewFormSchema,
+    LeadRequestQuoteFormSchema,
 )
 
 
@@ -23,6 +24,7 @@ TABLE_MAPPING = {
     'QuestionForm': 'question.form',
     'InstantForm': 'instant.form',
     'ReviewForm': 'review.form',
+    'RequestQuoteForm': 'request.quote.form',
 }
 
 
@@ -44,7 +46,8 @@ def create_validate_lead_form(
             form_data = lead_form_data['form']
             form_data['lead_id'] = lead_obj.id
             form_table.sudo().create(form_data)
-    except Exception:
+    except Exception as e:
+        print(e)
         raise HTTPException(status_code=422, detail='Something went wrong')
     return {'message': 'OK!'}
 
@@ -79,3 +82,11 @@ async def create_lead(
         env: Annotated[Environment, Depends(odoo_env)],
     ):
     return create_validate_lead_form(lead_form, 'ReviewForm', env)
+
+
+@router.post('/crm_lead/request-quote-form/')
+async def create_lead(
+        lead_form: LeadRequestQuoteFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    return create_validate_lead_form(lead_form, 'RequestQuoteForm', env)
