@@ -1,15 +1,17 @@
 import re
 from typing import (
     Optional,
+    Union,
 )
 from pydantic import (
     BaseModel,
-    AnyUrl,
+    create_model,
     EmailStr,
     constr,
     validator,
 )
 from ...stepone.schemas.form import SteponeForm
+from ...question.schemas.form import QuestionForm
 
 
 class Lead(BaseModel):
@@ -24,13 +26,18 @@ class Lead(BaseModel):
     city: str
 
     @validator('website')
-    def validate_url(cls, v):
+    def validate_url(cls, url):
         url_pattern = re.compile(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$')
-        if not url_pattern.match(v):
+        if not url_pattern.match(url):
             raise ValueError('Incorrect URL')
-        return v
+        return url
 
 
-class LeadFormSchema(BaseModel):
+class LeadSteponeFormSchema(BaseModel):
     lead: Lead
     form: SteponeForm
+
+
+class LeadQuestionFormSchema(BaseModel):
+    lead: Lead
+    form: QuestionForm
