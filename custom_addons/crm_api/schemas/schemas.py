@@ -5,8 +5,8 @@ from typing import (
 from pydantic import (
     BaseModel,
     EmailStr,
-    constr,
     validator,
+    constr,
     create_model,
 )
 from ...stepone.schemas.forms import (
@@ -21,14 +21,15 @@ from ...stepone.schemas.forms import (
 
 class Lead(BaseModel):
     name: str
-    website: str
+    website: str = 'https://example.com/'
     email_from: EmailStr
-    phone: constr(min_length=10, max_length=15)
-    company_id: Optional[int]
-    user_id: Optional[int]
-    country_id: Optional[int]
-    team_id: Optional[int]
-    city: str
+    phone: constr(min_length=10,
+                  max_length=18) = '88005553535'
+    company_id: Optional[int] = 1
+    user_id: Optional[int] = 1
+    country_id: Optional[int] = None
+    team_id: Optional[int] = None
+    city: str = 'Chisinau'
 
     @validator('website')
     def validate_url(cls, url):
