@@ -1,4 +1,4 @@
-from enum import Enum
+from ..choices import *
 from odoo import models, fields
 
 
@@ -34,17 +34,6 @@ class DefaultContactForm(models.Model):
         ('lead_id_unique', 'UNIQUE(lead_id)',
          'Each Form can be linked to only one CRM Lead.'),
     )
-
-
-class TransportCarType(str, Enum):
-    car = 'Car'
-    suv = 'SUV'
-    pickup = 'Pickup'
-    van = 'Van'
-    moto = 'Moto'
-    rv = 'RV'
-    heavy_equipment = 'Heavy Equipment'
-    general_freight = 'General Freight'
 
 
 class InstantForm(models.Model):
@@ -85,30 +74,6 @@ class QuestionForm(models.Model):
     )
 
 
-class TransportationType(str, Enum):
-    D2D = 'Door-to-door'
-    T2T = 'Terminal-to-terminal'
-
-
-class EquipmentType(str, Enum):
-    open_car_hauler = 'Open Car Hauler'
-    enclosed_car_hauler = 'Enclosed Car Hauler'
-    general_or_large_freight = 'General or Large Freight'
-
-
-class VehicleType(str, Enum):
-    car = 'Car'
-    suv = 'SUV'
-    pickup = 'Pickup'
-    van = 'Van'
-    moto = 'Moto'
-    atv = 'ATV'
-    rv = 'RV'
-    heavy_equipment = 'Heavy Equipment'
-    large_yacht = 'Large Yacht'
-    travel_trailer = 'Travel Trailer'
-
-
 class RequestQuoteForm(models.Model):
     _name = 'request.quote.form'
     _description = 'Request Quote Form Model'
@@ -139,19 +104,6 @@ class RequestQuoteForm(models.Model):
         ('lead_id_unique', 'UNIQUE(lead_id)',
          'Each Form can be linked to only one CRM Lead.'),
     )
-
-
-class RateChoice(str, Enum):
-    one = '1'
-    two = '2'
-    three = '3'
-    four = '4'
-    five = '5'
-    six = '6'
-    seven = '7'
-    eight = '8'
-    nine = '9'
-    ten = '10'
 
 
 class ReviewForm(models.Model):
