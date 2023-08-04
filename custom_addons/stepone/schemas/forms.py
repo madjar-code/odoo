@@ -2,14 +2,15 @@ from ..choices import *
 from pydantic import (
     BaseModel,
     HttpUrl,
+    AnyUrl,
     constr,
 )
 
 
 class SteponeForm(BaseModel):
-    linkedIn: HttpUrl = ...
-    file: str = ...
-    introduction: str = ...
+    linkedIn: HttpUrl
+    file: AnyUrl
+    introduction: str
 
 
 class DefaultContactForm(BaseModel):
@@ -35,9 +36,6 @@ class RequestQuoteForm(BaseModel):
     equipment_type: EquipmentType
     vehicle_type: VehicleType
     note: str
-
-    class Config:
-       use_enum_values = True
 
 
 class ReviewForm(BaseModel):
