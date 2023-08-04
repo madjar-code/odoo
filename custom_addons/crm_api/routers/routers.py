@@ -15,21 +15,15 @@ from ..schemas import (
     LeadRequestQuoteFormSchema,
     LeadDefaultContactFormSchema,
 )
+from ..repositories import (
+    OdooLeadFormRepository,
+)
+
 
 API_PREFIX = '/crm-lead'
-
 router = APIRouter(tags=['crm_lead'])
 
-
-def create_validate_lead_form(lead_form_schema, form_table, env):
-    lead_form_data = lead_form_schema.model_dump(by_alias=True)
-    crm_lead = env['crm.lead']
-    with env.cr.savepoint():
-        lead_obj = crm_lead.sudo().create(lead_form_data['lead'])
-        form_data = lead_form_data['form']
-        form_data['lead_id'] = lead_obj.id
-        form_table.sudo().create(form_data)
-    return {'message': 'OK!'}
+lead_form_repo = OdooLeadFormRepository('crm.lead')
 
 
 @router.post(f'{API_PREFIX}/stepone-form/')
@@ -37,8 +31,9 @@ async def create_lead_stepone(
         lead_form: LeadSteponeFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    form_table = env['stepone.form']
-    return create_validate_lead_form(lead_form, form_table, env)
+    lead_form_repo.create_validate_lead_form(
+        lead_form, 'stepone.form', env)
+    return {'message': 'stepone form was created!'}
 
 
 @router.post(f'{API_PREFIX}/question-form/')
@@ -46,8 +41,9 @@ async def create_lead_question(
         lead_form: LeadQuestionFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    form_table = env['question.form']
-    return create_validate_lead_form(lead_form, form_table, env)
+    lead_form_repo.create_validate_lead_form(
+        lead_form, 'question.form', env)
+    return {'message': 'question form was created!'}
 
 
 @router.post(f'{API_PREFIX}/instant-form/')
@@ -55,8 +51,9 @@ async def create_lead_instant(
         lead_form: LeadInstantFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    form_table = env['instant.form']
-    return create_validate_lead_form(lead_form, form_table, env)
+    lead_form_repo.create_validate_lead_form(
+        lead_form, 'instant.form', env)
+    return {'message': 'instant form was created!'}
 
 
 @router.post(f'{API_PREFIX}/review-form/')
@@ -64,8 +61,9 @@ async def create_lead_review(
         lead_form: LeadReviewFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    form_table = env['review.form']
-    return create_validate_lead_form(lead_form, form_table, env)
+    lead_form_repo.create_validate_lead_form(
+        lead_form, 'review.form', env)
+    return {'message': 'review form was created!'}
 
 
 @router.post(f'{API_PREFIX}/request-quote-form/')
@@ -73,8 +71,9 @@ async def create_lead_request_quote(
         lead_form: LeadRequestQuoteFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    form_table = env['request.quote.form']
-    return create_validate_lead_form(lead_form, form_table, env)
+    lead_form_repo.create_validate_lead_form(
+        lead_form, 'request.quote.form', env)
+    return {'message': 'request quote form was created!'}
 
 
 @router.post(f'{API_PREFIX}/default-form/')
@@ -82,5 +81,6 @@ async def create_lead_default(
         lead_form: LeadDefaultContactFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    form_table = env['default.form']
-    return create_validate_lead_form(lead_form, form_table, env)
+    lead_form_repo.create_validate_lead_form(
+        lead_form, 'default.form', env)
+    return {'message': 'default form was created!'}
