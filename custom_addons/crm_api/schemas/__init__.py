@@ -1,5 +1,5 @@
 from .schemas import (
-    Lead,
+    LeadSchema,
     LeadSteponeFormSchema,
     LeadQuestionFormSchema,
     LeadInstantFormSchema,

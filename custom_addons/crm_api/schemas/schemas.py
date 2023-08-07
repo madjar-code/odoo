@@ -9,6 +9,7 @@ from pydantic import (
     constr,
     create_model,
 )
+from odoo.addons.mail.models.res_company import Company
 from ...stepone.schemas.forms import (
     SteponeForm,
     DefaultContactForm,
@@ -19,7 +20,7 @@ from ...stepone.schemas.forms import (
 )
 
 
-class Lead(BaseModel):
+class LeadSchema(BaseModel):
     name: str
     website: str = 'https://example.com/'
     email_from: EmailStr
@@ -32,7 +33,7 @@ class Lead(BaseModel):
     city: str = 'Chisinau'
 
     @validator('website')
-    def validate_url(cls, url):
+    def validate_url(cls, url: str) -> str:
         url_pattern = re.compile(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$')
         if not url_pattern.match(url):
             raise ValueError('Incorrect URL')
@@ -40,7 +41,7 @@ class Lead(BaseModel):
 
 
 def create_lead_form_schema(form_schema: BaseModel):
-    return create_model('LeadFormSchema', lead=(Lead, ...), form=(form_schema, ...))
+    return create_model('LeadFormSchema', lead=(LeadSchema, ...), form=(form_schema, ...))
 
 
 LeadSteponeFormSchema = create_lead_form_schema(SteponeForm)
