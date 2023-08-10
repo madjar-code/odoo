@@ -4,6 +4,7 @@ from typing import (
     Optional,
     NamedTuple,
 )
+from pydantic import HttpUrl
 from .site_url_searcher import SiteNavigator
 from .enrich_parser import EnrichParser
 
@@ -15,27 +16,32 @@ class ParsedData(NamedTuple):
     addresses: Set[str]
 
 
-def get_data_from_website(url_prefix: str, home_url: str)\
+class WebsiteDataExtractor:
+    def __init__(self, url: HttpUrl) -> None:
+        self.parser = EnrichParser(url)
+
+    def get_data(self):
+        return ParsedData(
+            email_addresses=self.parser.get_email_addresses(),
+            phone_numbers=self.parser.get_phone_numbers(),
+            social_links=self.parser.get_social_links(),
+            addresses=self.parser.get_addresses()
+        )._asdict()
+
+
+def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
         -> Dict[str, Optional[ParsedData]]:
     site_navigator = SiteNavigator(url_prefix, home_url)
     contact_url = site_navigator.find_contact_url()
     
-    home_page_parser = EnrichParser(home_url)
-    home_page_data = ParsedData(
-        email_addresses=home_page_parser.get_email_addresses(),
-        phone_numbers=home_page_parser.get_phone_numbers(),
-        social_links=home_page_parser.get_social_links(),
-        addresses=home_page_parser.get_addresses()
-    )._asdict()
+    home_page_extractor = WebsiteDataExtractor(home_url)
+    home_page_data = home_page_extractor.get_data()
+
     contact_page_data = None
     if contact_url:
-        contact_page_parser = EnrichParser(contact_url)
-        contact_page_data = ParsedData(
-            email_addresses=contact_page_parser.get_email_addresses(),
-            phone_numbers=contact_page_parser.get_phone_numbers(),
-            social_links=contact_page_parser.get_social_links(),
-            addresses=contact_page_parser.get_addresses()
-        )._asdict()
+        contact_page_extractor = WebsiteDataExtractor(contact_url)
+        contact_page_data = contact_page_extractor.get_data()
+
     return {
         'home_page': home_page_data,
         'contact_page': contact_page_data
