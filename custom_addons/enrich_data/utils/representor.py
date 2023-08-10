@@ -4,9 +4,15 @@ from typing import (
     Optional,
     NamedTuple,
 )
+from enum import Enum
 from pydantic import HttpUrl
 from .site_url_searcher import SiteNavigator
 from .enrich_parser import EnrichParser
+
+
+class WebsitePage(Enum):
+    HOME_PAGE = 'home_page'
+    CONTACT_PAGE = 'contact_page'
 
 
 class ParsedData(NamedTuple):
@@ -30,7 +36,7 @@ class WebsiteDataExtractor:
 
 
 def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
-        -> Dict[str, Optional[ParsedData]]:
+        -> Dict[WebsitePage, Optional[ParsedData]]:
     site_navigator = SiteNavigator(url_prefix, home_url)
     contact_url = site_navigator.find_contact_url()
     
@@ -43,6 +49,6 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
         contact_page_data = contact_page_extractor.get_data()
 
     return {
-        'home_page': home_page_data,
-        'contact_page': contact_page_data
+        WebsitePage.HOME_PAGE: home_page_data,
+        WebsitePage.CONTACT_PAGE: contact_page_data
     }
