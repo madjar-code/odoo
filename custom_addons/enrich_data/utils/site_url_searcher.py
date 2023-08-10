@@ -1,4 +1,5 @@
 import requests
+from http import HTTPStatus
 from bs4 import (
     BeautifulSoup,
     Tag,
@@ -10,8 +11,7 @@ from pydantic import (
     HttpUrl,
     AnyUrl, 
 )
-from http import HTTPStatus
-from .keywords import CONTACT_STRINGS
+from keywords import CONTACT_STRINGS
 
 
 PARSER = 'html.parser'
