@@ -11,7 +11,7 @@ from pydantic import (
     HttpUrl,
     AnyUrl, 
 )
-from keywords import CONTACT_STRINGS
+from .keywords import CONTACT_STRINGS
 
 
 PARSER = 'html.parser'

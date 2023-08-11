@@ -14,7 +14,7 @@ from pydantic import (
     EmailStr,
 )
 from http import HTTPStatus
-from keywords import (
+from .keywords import (
     SOCIAL_NETWORKS,
     ADDRESS_KEYWORDS
 )

@@ -10,8 +10,8 @@ from pydantic import (
     EmailStr,
     HttpUrl,
 )
-from site_url_searcher import SiteURLSearcher
-from enrich_parser import EnrichParser
+from .site_url_searcher import SiteURLSearcher
+from .enrich_parser import EnrichParser
 
 
 PhoneNumber: TypeAlias = str
@@ -62,7 +62,6 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
     if contact_url:
         contact_page_extractor = WebsiteDataExtractor(contact_url)
         contact_page_data = contact_page_extractor.get_data()
-
     return {
         WebsitePage.HOME_PAGE.value: home_page_data,
         WebsitePage.CONTACT_PAGE.value: contact_page_data
