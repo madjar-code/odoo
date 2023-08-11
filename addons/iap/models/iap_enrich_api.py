@@ -12,13 +12,12 @@ class IapEnrichAPI(models.AbstractModel):
 
     @api.model
     def _contact_iap(self, local_endpoint, params):
-        # account = self.env['iap.account'].get('reveal')
-        # dbuuid = self.env['ir.config_parameter'].sudo().get_param('database.uuid')
-        # params['account_token'] = account.account_token
-        # params['dbuuid'] = dbuuid
-        # base_url = self.env['ir.config_parameter'].sudo().get_param('enrich.endpoint', self._DEFAULT_ENDPOINT)
-        # return iap_tools.iap_jsonrpc(base_url + local_endpoint, params=params, timeout=300)
-        pass
+        account = self.env['iap.account'].get('reveal')
+        dbuuid = self.env['ir.config_parameter'].sudo().get_param('database.uuid')
+        params['account_token'] = account.account_token
+        params['dbuuid'] = dbuuid
+        base_url = self.env['ir.config_parameter'].sudo().get_param('enrich.endpoint', self._DEFAULT_ENDPOINT)
+        return iap_tools.iap_jsonrpc(base_url + local_endpoint, params=params, timeout=300)
 
     @api.model
     def _request_enrich(self, lead_emails):
@@ -34,16 +33,7 @@ class IapEnrichAPI(models.AbstractModel):
             "message": "You don't have enough credits on your account to use this service."
             }
         """
-        # params = {
-        #     'domains': lead_emails,
-        # }
-        # return self._contact_iap('/iap/clearbit/1/lead_enrichment_email', params=params)
-        default_data = {
-            lead_id: {
-                'company_name': 'Default Company Name',
-                'address': 'Default Address',
-                'phone': 'Default Phone Number',
-            }
-            for lead_id in lead_emails.keys()
+        params = {
+            'domains': lead_emails,
         }
-        return default_data
+        return self._contact_iap('/iap/clearbit/1/lead_enrichment_email', params=params)
