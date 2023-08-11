@@ -6,9 +6,12 @@
     'depends': [
         'crm',
         'mail',
+        'enrich_data',
     ],
-    # 'data': (
-    # ),
+    'data': (
+        'data/ir_action.xml',
+        'data/mail_templates.xml',
+    ),
     'installable': True,
     'application': True,
 }
