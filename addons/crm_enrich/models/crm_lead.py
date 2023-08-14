@@ -78,6 +78,8 @@ class Lead(models.Model):
             values = {'enrich_done': True}
             if not lead.phone and extracted_data.get('phone'):
                 values['phone'] = extracted_data['phone']
+            if not lead.partner_name and extracted_data.get('site_name'):
+                values['partner_name'] = extracted_data['site_name']
             lead.write(values)
 
     def _merge_get_fields_specific(self):
