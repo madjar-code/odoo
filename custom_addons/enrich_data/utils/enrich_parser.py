@@ -1,5 +1,6 @@
 import re
 import requests
+from urllib.parse import urlparse
 from bs4 import (
     BeautifulSoup,
     Tag,
@@ -13,6 +14,7 @@ from pydantic import (
     HttpUrl,
     EmailStr,
 )
+from collections import defaultdict
 from http import HTTPStatus
 from .keywords import (
     SOCIAL_NETWORKS,
@@ -27,8 +29,13 @@ AddressType: TypeAlias = str
 
 
 class EnrichParser:
-    def __init__(self, url: HttpUrl) -> None:
+    def __init__(self, url: HttpUrl, site_name: str = None) -> None:
         self._url = url
+        self._site_name = site_name
+        if not site_name:
+            parsed_url = urlparse(url)
+            parts = parsed_url.netloc.split('.')
+            self._site_name = parts[0] if parts[0] != 'www' else parts[1]
         response = requests.get(self._url)
         if response.status_code == HTTPStatus.OK:
             self._soup = BeautifulSoup(response.text, PARSER)
@@ -78,3 +85,17 @@ class EnrichParser:
                     if len(text) < 64 and re.search(pattern, text):
                         addresses.add(text)
         return addresses
+
+    def get_site_names(self) -> defaultdict[str, int]:
+        """
+        This method is used to extract all names
+        that are similar to the company name
+        """
+        names_dict = defaultdict(int)
+        name_pattern = r'\s*'.join(self._site_name)
+        text: str = self._soup.get_text()
+        print(name_pattern)
+        name_matches = re.findall(name_pattern, text, flags=re.IGNORECASE)
+        for match in name_matches:
+            names_dict[match] += 1
+        return names_dict
