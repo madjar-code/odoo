@@ -4,6 +4,7 @@ from typing import (
     Optional,
     NamedTuple,
     TypeAlias,
+    DefaultDict,
 )
 from enum import Enum
 from pydantic import (
@@ -28,6 +29,7 @@ class ParsedData(NamedTuple):
     phone_numbers: Set[PhoneNumber]
     social_links: Set[HttpUrl]
     addresses: Set[AddressType]
+    site_names: DefaultDict[str, int]
 
 
 class TargetDataUnit(NamedTuple):
@@ -35,6 +37,7 @@ class TargetDataUnit(NamedTuple):
     phone: Optional[PhoneNumber]
     social_link: Optional[HttpUrl]
     address: Optional[AddressType]
+    site_name: Optional[str]
 
 
 class WebsiteDataExtractor:
@@ -46,7 +49,8 @@ class WebsiteDataExtractor:
             email_addresses=self.parser.get_email_addresses(),
             phone_numbers=self.parser.get_phone_numbers(),
             social_links=self.parser.get_social_links(),
-            addresses=self.parser.get_addresses()
+            addresses=self.parser.get_addresses(),
+            site_names=self.parser.get_site_names()
         )
 
 
@@ -77,7 +81,9 @@ def process_website_data(website_data:\
     phone = None
     social_link = None
     address = None
+    site_name = None
 
+    # В качестве имени будет выступать самый популярный вид текста.
     if contact_page_data:
         if contact_page_data.email_addresses:
             email = contact_page_data.email_addresses.pop()
@@ -87,6 +93,10 @@ def process_website_data(website_data:\
             social_link = contact_page_data.social_links.pop()
         if contact_page_data.addresses:
             address = contact_page_data.addresses.pop()
+        if contact_page_data.site_names:
+            site_names: DefaultDict = contact_page_data.site_names
+            max_name = max(site_names, key=site_names.get)
+            site_name = max_name
 
     if home_page_data.email_addresses and not email:
         email = home_page_data.email_addresses.pop()
@@ -96,5 +106,9 @@ def process_website_data(website_data:\
         social_link = home_page_data.social_links.pop()
     if home_page_data.addresses and not address:
         address = home_page_data.addresses.pop()
+    if home_page_data.site_names and not site_name:
+        site_names: DefaultDict = home_page_data.site_names
+        max_name = max(site_names, key=site_names.get)
+        site_name = max_name
 
-    return TargetDataUnit(email, phone, social_link, address)._asdict()
+    return TargetDataUnit(email, phone, social_link, address, site_name)._asdict()
