@@ -42,6 +42,7 @@ class AddressData(NamedTuple):
     state: Optional[str]
     zip_code: Optional[str]
     country: Optional[str]
+    country_code: Optional[str]
 
 
 class TargetDataUnit(NamedTuple):
@@ -97,13 +98,15 @@ def process_address_string(initial_address: AddressType) -> Optional[AddressData
     location = geolocator.reverse(f'{latitude},{longitude}', language='en')
     address = location.raw['address']
     country = address.get('country')
+    country_code = address.get('country_code')
     road = address.get('road')
     state = address.get('state')
     city = address.get('city')    
     zip_code = address.get('postcode')
 
     return AddressData(
-        country=country, 
+        country=country,
+        country_code=country_code,
         state=state,
         city=city,
         zip_code=zip_code,
@@ -131,7 +134,7 @@ def process_website_data(website_data:\
             social_link = contact_page_data.social_links.pop()
         if contact_page_data.addresses:
             address = contact_page_data.addresses.pop()
-            address_data = process_address_string(initial_address=address)
+            address_data = process_address_string(address[4:])
         if contact_page_data.site_names:
             site_names: DefaultDict = contact_page_data.site_names
             max_name = max(site_names, key=site_names.get)
