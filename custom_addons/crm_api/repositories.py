@@ -21,24 +21,35 @@ class OdooLeadFormRepository(AbstractRepository):
     def create_validate_lead_form(self, lead_form_schema: BaseModel,
                                   form_table_name: str, env: Environment) -> None:
         lead_form_data = lead_form_schema.model_dump()
-        company_id, user_id = lead_form_data['lead']['company_id'],\
-                              lead_form_data['lead']['user_id']
-        company_table, user_table = env['res.company'], env['res.users']
+        # company_id, user_id = lead_form_data['lead']['company_id'],\
+        #                       lead_form_data['lead']['user_id']
+        # company_table, user_table = env['res.company'], env['res.users']
 
-        if company_id and not company_table.search([('id', '=', company_id)]):
-            raise ValueError("Company with given id doesn't exist")
+        # if company_id and not company_table.search([('id', '=', company_id)]):
+        #     raise ValueError("Company with given id doesn't exist")
 
-        if user_id and not user_table.search([('id', '=', user_id)]):
-            raise ValueError("User with given id doesn't exist")
+        # if user_id and not user_table.search([('id', '=', user_id)]):
+        #     raise ValueError("User with given id doesn't exist")
 
         form_table = env[form_table_name]
         crm_lead_table = env[self.lead_table_name]
+        crm_property_table = env['crm.property']
         with env.cr.savepoint():
             lead_obj = crm_lead_table.sudo().create(
                 lead_form_data['lead'])
             form_data = lead_form_data['form']
-            form_data['lead_id'] = lead_obj.id
-            form_table.sudo().create(form_data)
+            for key, value in form_data.items():
+                property_values = {
+                    'name': key,
+                    'type': 'char',
+                    'value': value,
+                    'lead_id': lead_obj.id,
+                }
+                crm_property_table.sudo().create(property_values)
+
+            lead_obj.write({
+                'type': 'lead',
+            })
 
 
 # class SQLLeadFormRepository(AbstractRepository):
