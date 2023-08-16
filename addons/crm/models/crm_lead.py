@@ -235,6 +235,9 @@ class Lead(models.Model):
     campaign_id = fields.Many2one(ondelete='set null')
     medium_id = fields.Many2one(ondelete='set null')
     source_id = fields.Many2one(ondelete='set null')
+    property_ids = fields.One2many('crm.property',
+                                    string='Property',
+                                    inverse_name='lead_id')
 
     _sql_constraints = [
         ('check_probability', 'check(probability >= 0 and probability <= 100)', 'The probability of closing the deal should be between 0% and 100%!')

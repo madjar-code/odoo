@@ -284,6 +284,15 @@
                                     </group>
                                 </group>
                             </page>
+                            
+                                <page name="properties" string="Unique Properties">
+                                    <group string="Properties">
+                                
+                                    <field name="property_ids"/>
+                                </group>
+                                </page>
+                            
+                            
                             <page name="lead" string="Extra Information" attrs="{'invisible': [('type', '=', 'lead')]}">
                                 <group>
                                     <group string="Contact Information">
