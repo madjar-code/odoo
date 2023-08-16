@@ -82,7 +82,7 @@ class EnrichParser:
             if any(char.isdigit() for char in text):
                 for key in ADDRESS_KEYWORDS:
                     pattern = re.compile(rf'{re.escape(key)}', re.IGNORECASE)
-                    if len(text) < 64 and re.search(pattern, text):
+                    if len(text) > 8 and len(text) < 80 and re.search(pattern, text):
                         addresses.add(text)
         return addresses
 
