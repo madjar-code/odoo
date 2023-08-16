@@ -72,9 +72,9 @@ class Lead(models.Model):
         for lead in self.search([('id', 'in', list(enrich_response.keys()))]):
             extracted_data = enrich_response.get(lead.id)
             if not extracted_data:
-                # lead.write({'enrich_done': Tsrue})
+                lead.write({'enrich_done': True})
                 continue
-            # values = {'enrich_done': True}
+            values = {'enrich_done': True}
             values = {}
 
             if not lead.phone and extracted_data.get('phone'):
@@ -87,6 +87,12 @@ class Lead(models.Model):
                 values['zip'] = extracted_data['address'].get('zip_code')
             if not lead.city and extracted_data.get('address'):
                 values['city'] = extracted_data['address'].get('city')
+            if not lead.country_id and extracted_data.get('address'):
+                country_code: str = extracted_data['address'].get('country_code')
+                country = self.env['res.country'].\
+                    search([('code', '=', country_code.upper())], limit=1)
+                if country:
+                    values['country_id'] = country.id
             lead.write(values)
 
     def _merge_get_fields_specific(self):
