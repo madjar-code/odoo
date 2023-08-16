@@ -69,17 +69,24 @@ class Lead(models.Model):
         Handle from the service and enrich the lead accordingly
         :param enrich_response: dict {lead_id: company data}
         """
-        print(enrich_response)
         for lead in self.search([('id', 'in', list(enrich_response.keys()))]):
             extracted_data = enrich_response.get(lead.id)
             if not extracted_data:
-                lead.write({'enrich_done': True})
+                # lead.write({'enrich_done': Tsrue})
                 continue
-            values = {'enrich_done': True}
+            # values = {'enrich_done': True}
+            values = {}
+
             if not lead.phone and extracted_data.get('phone'):
                 values['phone'] = extracted_data['phone']
             if not lead.partner_name and extracted_data.get('site_name'):
                 values['partner_name'] = extracted_data['site_name']
+            if not lead.street and extracted_data.get('address'):
+                values['street'] = extracted_data['address'].get('street')
+            if not lead.zip and extracted_data.get('address'):
+                values['zip'] = extracted_data['address'].get('zip_code')
+            if not lead.city and extracted_data.get('address'):
+                values['city'] = extracted_data['address'].get('city')
             lead.write(values)
 
     def _merge_get_fields_specific(self):
