@@ -11,6 +11,10 @@ from pydantic import (
     EmailStr,
     HttpUrl,
 )
+import geopy.geocoders
+from geopy.location import Location
+from geopy.geocoders import Nominatim
+
 from .site_url_searcher import SiteURLSearcher
 from .enrich_parser import EnrichParser
 
@@ -32,11 +36,19 @@ class ParsedData(NamedTuple):
     site_names: DefaultDict[str, int]
 
 
+class AddressData(NamedTuple):
+    street: Optional[str]
+    city: Optional[str]
+    state: Optional[str]
+    zip_code: Optional[str]
+    country: Optional[str]
+
+
 class TargetDataUnit(NamedTuple):
     email: Optional[EmailStr]
     phone: Optional[PhoneNumber]
     social_link: Optional[HttpUrl]
-    address: Optional[AddressType]
+    address: Optional[AddressData]
     site_name: Optional[str]
 
 
@@ -72,6 +84,33 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
     }
 
 
+def process_address_string(initial_address: AddressType) -> Optional[AddressData]:
+    geopy.geocoders.options.default_user_agent = 'my_app'
+    geolocator = Nominatim()
+    initial_location: Location = geolocator.geocode(initial_address)
+    
+    if not initial_location:
+        return None
+
+    latitude, longitude = initial_location.latitude, initial_location.longitude
+
+    location = geolocator.reverse(f'{latitude},{longitude}', language='en')
+    address = location.raw['address']
+    country = address.get('country')
+    road = address.get('road')
+    state = address.get('state')
+    city = address.get('city')    
+    zip_code = address.get('postcode')
+
+    return AddressData(
+        country=country, 
+        state=state,
+        city=city,
+        zip_code=zip_code,
+        street=road
+    )._asdict()
+
+
 def process_website_data(website_data:\
         Dict[WebsitePage, Optional[ParsedData]]) -> TargetDataUnit:
     contact_page_data = website_data[WebsitePage.CONTACT_PAGE.value]
@@ -83,7 +122,6 @@ def process_website_data(website_data:\
     address = None
     site_name = None
 
-    # В качестве имени будет выступать самый популярный вид текста.
     if contact_page_data:
         if contact_page_data.email_addresses:
             email = contact_page_data.email_addresses.pop()
@@ -93,6 +131,7 @@ def process_website_data(website_data:\
             social_link = contact_page_data.social_links.pop()
         if contact_page_data.addresses:
             address = contact_page_data.addresses.pop()
+            address_data = process_address_string(initial_address=address)
         if contact_page_data.site_names:
             site_names: DefaultDict = contact_page_data.site_names
             max_name = max(site_names, key=site_names.get)
@@ -111,4 +150,4 @@ def process_website_data(website_data:\
         max_name = max(site_names, key=site_names.get)
         site_name = max_name
 
-    return TargetDataUnit(email, phone, social_link, address, site_name)._asdict()
+    return TargetDataUnit(email, phone, social_link, address_data, site_name)._asdict()
