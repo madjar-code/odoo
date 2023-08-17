@@ -107,7 +107,7 @@ class Lead(models.Model):
     user_id = fields.Many2one(
         'res.users', string='Salesperson', default=lambda self: self.env.user,
         domain="['&', ('share', '=', False), ('company_ids', 'in', user_company_ids)]",
-        check_company=True, index=True, tracking=True)
+        check_company=True, index=True, tracking=True) 
     user_company_ids = fields.Many2many(
         'res.company', compute='_compute_user_company_ids',
         help='UX: Limit to lead company or all if no company')
@@ -115,9 +115,9 @@ class Lead(models.Model):
         'crm.team', string='Sales Team', check_company=True, index=True, tracking=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",
         compute='_compute_team_id', ondelete="set null", readonly=False, store=True, precompute=True)
-    lead_properties = fields.Properties(
-        'Properties', definition='team_id.lead_properties_definition',
-        copy=True)
+    # lead_properties = fields.Properties(
+    #     'Properties', definition='team_id.lead_properties_definition',
+    #     copy=True)
     company_id = fields.Many2one(
         'res.company', string='Company', index=True,
         compute='_compute_company_id', readonly=False, store=True)
@@ -235,7 +235,7 @@ class Lead(models.Model):
     campaign_id = fields.Many2one(ondelete='set null')
     medium_id = fields.Many2one(ondelete='set null')
     source_id = fields.Many2one(ondelete='set null')
-    property_ids = fields.One2many('crm.property',
+    property_ids = fields.One2many('crm.prop.value',
                                     string='Property',
                                     inverse_name='lead_id')
 
@@ -715,6 +715,16 @@ class Lead(models.Model):
                 vals['website'] = self.env['res.partner']._clean_website(vals['website'])
         leads = super(Lead, self).create(vals_list)
 
+        # for lead in leads:
+        #     common_properties = self.env['crm.property'].search([('is_common', '=', True)])
+        #     for common_property in common_properties:
+        #         self.env['crm.property'].create({
+        #             'name': common_property.name,
+        #             'type': common_property.type,
+        #             'is_common': False,
+        #             'value': common_property.value,
+        #             'lead_id': lead.id
+        #         })
         for lead, values in zip(leads, vals_list):
             if any(field in ['active', 'stage_id'] for field in values):
                 lead._handle_won_lost(values)

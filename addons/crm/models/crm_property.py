@@ -1,5 +1,5 @@
 from enum import Enum
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class PropertyType(str, Enum):
@@ -24,9 +24,33 @@ class CRMProperty(models.Model):
         selection=[(item.value, item.name) for item in PropertyType],
         string='Property Type',
     )
-    value = fields.Char('Property Value', required=True)
+    is_common = fields.Boolean(
+        string='Is the property common?', default=True)
+    value = fields.Char('Property Value', required=False)
 
     lead_id = fields.Many2one('crm.lead',
                               required=False,
                               string='Related Lead',
                               ondelete='cascade')
+
+
+class CRMPropertyDescription(models.Model):
+    _name = 'crm.prop.description'
+    _description = 'Lead Property Description'
+
+    name = fields.Char('Property Name', required=True)
+    prop_type = fields.Selection(
+        selection=[(item.value, item.name) for item in PropertyType],
+        string='Property Type',
+    )
+
+
+class CRMPropertyValue(models.Model):
+    _name = 'crm.prop.value'
+    _description = 'Lead Property Value'
+
+    value = fields.Char('Property Value', required=False)
+    prop_description = fields.Many2one(
+        'crm.prop.description', 'Property Description', required=True)
+    lead_id = fields.Many2one(
+        'crm.lead', string='Related Lead', required=True)
