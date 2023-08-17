@@ -18,8 +18,7 @@ class OdooLeadFormRepository(AbstractRepository):
     def __init__(self, lead_table_name: str) -> None:
         self.lead_table_name = lead_table_name
 
-    def create_validate_lead_form(self, lead_form_schema: BaseModel,
-                                  form_table_name: str, env: Environment) -> None:
+    def create_validate_lead_form(self, lead_form_schema: BaseModel, env: Environment) -> None:
         lead_form_data = lead_form_schema.model_dump()
         # company_id, user_id = lead_form_data['lead']['company_id'],\
         #                       lead_form_data['lead']['user_id']
@@ -31,7 +30,7 @@ class OdooLeadFormRepository(AbstractRepository):
         # if user_id and not user_table.search([('id', '=', user_id)]):
         #     raise ValueError("User with given id doesn't exist")
 
-        form_table = env[form_table_name]
+        # form_table = env[form_table_name]
         crm_lead_table = env[self.lead_table_name]
         crm_property_table = env['crm.property']
         with env.cr.savepoint():
