@@ -31,8 +31,7 @@ async def create_lead_stepone(
         lead_form: LeadSteponeFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    lead_form_repo.create_validate_lead_form(
-        lead_form, 'stepone.form', env)
+    lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'stepone form was created!'}
 
 
@@ -41,8 +40,7 @@ async def create_lead_question(
         lead_form: LeadQuestionFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    lead_form_repo.create_validate_lead_form(
-        lead_form, 'question.form', env)
+    lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'question form was created!'}
 
 
@@ -51,8 +49,7 @@ async def create_lead_instant(
         lead_form: LeadInstantFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    lead_form_repo.create_validate_lead_form(
-        lead_form, 'instant.form', env)
+    lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'instant form was created!'}
 
 
@@ -61,8 +58,7 @@ async def create_lead_review(
         lead_form: LeadReviewFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    lead_form_repo.create_validate_lead_form(
-        lead_form, 'review.form', env)
+    lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'review form was created!'}
 
 
@@ -71,8 +67,7 @@ async def create_lead_request_quote(
         lead_form: LeadRequestQuoteFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    lead_form_repo.create_validate_lead_form(
-        lead_form, 'request.quote.form', env)
+    lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'request quote form was created!'}
 
 
@@ -81,6 +76,5 @@ async def create_lead_default(
         lead_form: LeadDefaultContactFormSchema,
         env: Annotated[Environment, Depends(odoo_env)],
     ):
-    lead_form_repo.create_validate_lead_form(
-        lead_form, 'default.form', env)
+    lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'default form was created!'}
