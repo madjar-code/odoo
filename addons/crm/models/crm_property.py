@@ -1,5 +1,5 @@
 from enum import Enum
-from odoo import models, fields, api
+from odoo import models, fields
 
 
 class PropertyType(str, Enum):
@@ -50,7 +50,7 @@ class CRMPropertyValue(models.Model):
     _description = 'Lead Property Value'
 
     value = fields.Char('Property Value', required=False)
-    prop_description = fields.Many2one(
+    prop_description_id = fields.Many2one(
         'crm.prop.description', 'Property Description', required=True)
     lead_id = fields.Many2one(
         'crm.lead', string='Related Lead', required=True)
