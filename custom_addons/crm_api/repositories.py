@@ -9,16 +9,16 @@ class AbstractRepository(ABC):
         """Save the lead_table_name value."""
 
     @abstractmethod
-    def create_validate_lead_form(self, lead_form_schema: BaseModel,
+    def create_validate_lead_properties(self, lead_form_schema: BaseModel,
                                   form_table_name: str, env: Environment) -> None:
         """Validate and create lead and form by schema."""
 
 
-class OdooLeadFormRepository(AbstractRepository):
+class OdooLeadPropertiesRepository(AbstractRepository):
     def __init__(self, lead_table_name: str) -> None:
         self.lead_table_name = lead_table_name
 
-    def create_validate_lead_form(self, lead_form_schema: BaseModel, env: Environment) -> None:
+    def create_validate_lead_properties(self, lead_form_schema: BaseModel, env: Environment) -> None:
         lead_form_data = lead_form_schema.model_dump()
         # company_id, user_id = lead_form_data['lead']['company_id'],\
         #                       lead_form_data['lead']['user_id']
@@ -31,8 +31,10 @@ class OdooLeadFormRepository(AbstractRepository):
         #     raise ValueError("User with given id doesn't exist")
 
         # form_table = env[form_table_name]
+
         crm_lead_table = env[self.lead_table_name]
-        crm_property_table = env['crm.property']
+        crm_property_value_table = env['crm.prop.value']
+        crm_property_description_table = env['crm.prop.description']
         with env.cr.savepoint():
             lead_obj = crm_lead_table.sudo().create(
                 lead_form_data['lead'])
@@ -44,8 +46,24 @@ class OdooLeadFormRepository(AbstractRepository):
                     'value': value,
                     'lead_id': lead_obj.id,
                 }
-                crm_property_table.sudo().create(property_values)
-
+                prop_description = crm_property_description_table.sudo().search(
+                    [('name', '=', property_values['name'])], limit=1)
+                if prop_description:
+                    crm_property_value_table.sudo().create({
+                        'value': value,
+                        'prop_description_id': prop_description[0].id,
+                        'lead_id': lead_obj.id
+                    })
+                else:
+                    prop_description = crm_property_description_table.sudo().create({
+                        'name': property_values['name'],
+                        'prop_type': property_values['type'],
+                    })
+                    crm_property_value_table.sudo().create({
+                        'value': value,
+                        'prop_description_id': prop_description.id,
+                        'lead_id': lead_obj.id
+                    })
             lead_obj.write({
                 'type': 'lead',
             })
