@@ -33,6 +33,10 @@ class CRMProperty(models.Model):
                               string='Related Lead',
                               ondelete='cascade')
 
+    def unlink(self):
+        self.many2one_field.unlink()
+        return super(CRMProperty, self).unlink()
+
 
 class CRMPropertyDescription(models.Model):
     _name = 'crm.prop.description'
