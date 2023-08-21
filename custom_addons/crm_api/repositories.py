@@ -9,16 +9,16 @@ class AbstractRepository(ABC):
         """Save the lead_table_name value."""
 
     @abstractmethod
-    def create_validate_lead_properties(self, lead_form_schema: BaseModel,
+    def create_validate_lead_form(self, lead_form_schema: BaseModel,
                                   form_table_name: str, env: Environment) -> None:
         """Validate and create lead and form by schema."""
 
 
-class OdooLeadPropertiesRepository(AbstractRepository):
+class OdooLeadFormRepository(AbstractRepository):
     def __init__(self, lead_table_name: str) -> None:
         self.lead_table_name = lead_table_name
 
-    def create_validate_lead_properties(self, lead_form_schema: BaseModel, env: Environment) -> None:
+    def create_validate_lead_form(self, lead_form_schema: BaseModel, env: Environment) -> None:
         lead_form_data = lead_form_schema.model_dump()
         # company_id, user_id = lead_form_data['lead']['company_id'],\
         #                       lead_form_data['lead']['user_id']
