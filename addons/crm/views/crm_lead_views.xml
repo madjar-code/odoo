@@ -264,13 +264,15 @@
                                     <field name="value" string="Property Value"/>
                                 </tree>
                             </field> -->
-                            <field attrs="{'invisible': [('team_id', '=', False)]}"
-                                name="property_ids" nolabel="1" columns="2" hideKanbanOption="1"/>
-                        <!-- </group> -->
-                        <!-- <group string="Common Properties"> -->
+                            <field name="property_ids" widget="kanban">
+                                <tree>
+                                    <field name="prop_description_id">
+                                    </field>
+                                    <field name="value"/>
+                                </tree>
+                            </field>
                             <!-- <field attrs="{'invisible': [('team_id', '=', False)]}"
                                 name="lead_properties" nolabel="1" columns="2" hideKanbanOption="1"/> -->
-                        <!-- </group> -->
                         <notebook>
                             <page string="Internal Notes" name="internal_notes">
                                 <field name="description" placeholder="Add a description..." options="{'collaborative': true}" />
