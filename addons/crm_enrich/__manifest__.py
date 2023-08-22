@@ -6,7 +6,7 @@
     'depends': [
         'crm',
         'mail',
-        'enrich_data',
+        # 'enrich_data',
     ],
     'data': (
         'data/ir_action.xml',

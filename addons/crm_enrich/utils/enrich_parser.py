@@ -1,4 +1,3 @@
-import time
 import re
 import requests
 from urllib.parse import urlparse

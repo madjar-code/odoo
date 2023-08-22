@@ -1,7 +1,7 @@
 import logging
 from psycopg2 import OperationalError
 from odoo import _, api, fields, models, tools
-from custom_addons.enrich_data.models.enrich_api import EnrichAPI
+from .enrich_api import EnrichAPI
 
 
 _logger = logging.getLogger(__name__)
