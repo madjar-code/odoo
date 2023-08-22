@@ -1,16 +1,17 @@
-from ..choices import *
+from typing import Optional
 from pydantic import (
     BaseModel,
     HttpUrl,
     AnyUrl,
     constr,
 )
+from ..choices import *
 
 
 class SteponeForm(BaseModel):
-    linkedIn: HttpUrl
-    file: AnyUrl
-    introduction: str
+    linkedIn: HttpUrl = 'https://example.com/'
+    file: AnyUrl = 'https://example.com/'
+    introduction: str = 'Test Intro Text'
 
 
 class DefaultContactForm(BaseModel):
