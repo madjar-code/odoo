@@ -1,3 +1,4 @@
+import time
 import re
 import requests
 from urllib.parse import urlparse
@@ -8,6 +9,8 @@ from bs4 import (
 from typing import (
     Set,
     List,
+    Dict,
+    
     TypeAlias,
 )
 from pydantic import (
@@ -16,6 +19,11 @@ from pydantic import (
 )
 from collections import defaultdict
 from http import HTTPStatus
+from selenium import webdriver
+from bs4 import BeautifulSoup
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from .keywords import (
     SOCIAL_NETWORKS,
     ADDRESS_KEYWORDS
@@ -94,8 +102,48 @@ class EnrichParser:
         names_dict = defaultdict(int)
         name_pattern = r'\s*'.join(self._site_name)
         text: str = self._soup.get_text()
-        print(name_pattern)
         name_matches = re.findall(name_pattern, text, flags=re.IGNORECASE)
         for match in name_matches:
             names_dict[match] += 1
         return names_dict
+
+
+class LinkedInEnrichParser:
+    def __init__(self, linkedin_url: HttpUrl) -> None:
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service,
+                                       options=chrome_options)
+        self.linkedin_url = linkedin_url
+        self._linkedin_login()
+        self.driver.get(linkedin_url)
+        src = self.driver.page_source
+        self.soup = BeautifulSoup(src, 'lxml')
+
+    def _linkedin_login(self) -> None:
+        self.driver.get('https://linkedin.com/uas/login')
+        username = self.driver.find_element(By.ID, 'username')
+        username.send_keys('evan.madjar@datadrivemd.com')
+        password = self.driver.find_element(By.ID, 'password')
+        password.send_keys('!KZT9T:sr(8s^4k')
+        self.driver.find_element(By.XPATH, "//button[@type='submit']").click()
+
+    def get_overview_data(self) -> Dict[str, str]:
+        about = self.soup.find('dl', {'class': 'overflow-hidden'})
+        dt_elements = about.find_all('dt')
+        dd_elements = about.find_all('dd')
+        data = dict()
+        for dt, dd in zip(dt_elements, dd_elements):
+            dt_text = dt.get_text(strip=True)
+            dd_text = dd.get_text(strip=True)
+            data[dt_text] = dd_text
+        return data
+
+    def get_location(self) -> str:
+        locations = self.soup.find('div', {'class': 'org-locations-module__card-spacing'})
+        address_element = locations.find('p', class_='t-14 t-black--light t-normal break-words')
+        if address_element:
+            address_text = address_element.get_text(strip=True)
+        return address_text
