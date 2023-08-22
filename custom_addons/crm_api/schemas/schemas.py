@@ -9,7 +9,6 @@ from pydantic import (
     constr,
     create_model,
 )
-from odoo.addons.mail.models.res_company import Company
 from ...stepone.schemas.forms import (
     SteponeForm,
     DefaultContactForm,
@@ -21,9 +20,9 @@ from ...stepone.schemas.forms import (
 
 
 class LeadSchema(BaseModel):
-    name: str
+    name: str = 'Lead Name'
     website: str = 'https://example.com/'
-    email_from: EmailStr
+    email_from: EmailStr = 'test@test.com'
     phone: constr(min_length=10,
                   max_length=18) = '88005553535'
     company_id: Optional[int] = 1
