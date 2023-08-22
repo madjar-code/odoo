@@ -16,7 +16,10 @@ from geopy.location import Location
 from geopy.geocoders import Nominatim
 
 from .site_url_searcher import SiteURLSearcher
-from .enrich_parser import EnrichParser
+from .enrich_parser import (
+    EnrichParser,
+    LinkedInEnrichParser,
+)
 
 
 PhoneNumber: TypeAlias = str
@@ -85,6 +88,13 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
     }
 
 
+def get_data_from_linkedin(linkedin_url: HttpUrl) -> Dict[str, str]:
+    linkedin_parser = LinkedInEnrichParser(linkedin_url)
+    linkedin_data = linkedin_parser.get_overview_data()
+    linkedin_data['address'] = linkedin_parser.get_location()
+    return linkedin_data
+
+
 def process_address_string(initial_address: AddressType) -> Optional[AddressData]:
     geopy.geocoders.options.default_user_agent = 'my_app'
     geolocator = Nominatim()
@@ -115,7 +125,8 @@ def process_address_string(initial_address: AddressType) -> Optional[AddressData
 
 
 def process_website_data(website_data:\
-        Dict[WebsitePage, Optional[ParsedData]]) -> TargetDataUnit:
+        Dict[WebsitePage, Optional[ParsedData]],
+        linkedin_data: Optional[Dict[str, str]]) -> TargetDataUnit:
     contact_page_data = website_data[WebsitePage.CONTACT_PAGE.value]
     home_page_data = website_data[WebsitePage.HOME_PAGE.value]
 
@@ -124,6 +135,7 @@ def process_website_data(website_data:\
     social_link = None
     address = None
     site_name = None
+
 
     if contact_page_data:
         if contact_page_data.email_addresses:
@@ -134,11 +146,16 @@ def process_website_data(website_data:\
             social_link = contact_page_data.social_links.pop()
         if contact_page_data.addresses:
             address = contact_page_data.addresses.pop()
-            address_data = process_address_string(address[4:])
+            address_data = process_address_string(address)
         if contact_page_data.site_names:
             site_names: DefaultDict = contact_page_data.site_names
             max_name = max(site_names, key=site_names.get)
             site_name = max_name
+    
+    if linkedin_data:
+        if linkedin_data['address']:
+            address = linkedin_data['address']
+            address_data = process_address_string(address)
 
     if home_page_data.email_addresses and not email:
         email = home_page_data.email_addresses.pop()

@@ -3,6 +3,7 @@ from pydantic import EmailStr
 # from odoo import models, api
 from ..utils.representor import (
     get_data_from_website,
+    get_data_from_linkedin,
     process_website_data,    
 )
 
@@ -27,6 +28,10 @@ class EnrichAPI:
             url_prefix = home_url
 
             website_data = get_data_from_website(url_prefix, home_url)
-            result_data[lead_id] = process_website_data(website_data)
+            linkedin_data = None
+            for social_link in website_data['home_page'].social_links:
+                if 'linkedin' in social_link:
+                    linkedin_data = get_data_from_linkedin(social_link + 'about')
+            result_data[lead_id] = process_website_data(website_data, linkedin_data)
 
         return result_data
