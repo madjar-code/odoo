@@ -54,7 +54,10 @@ class CRMPropertyValue(models.Model):
     _description = 'Lead Property Value'
 
     value = fields.Char('Property Value', required=False)
-    prop_description_id = fields.Many2one(
-        'crm.prop.description', 'Property Description', required=True)
-    lead_id = fields.Many2one(
-        'crm.lead', string='Related Lead', required=True)
+    prop_description_id = fields.Many2one('crm.prop.description',
+                                          'Property Description',
+                                           required=True)
+    lead_id = fields.Many2one('crm.lead',
+                              string='Related Lead',
+                              required=True,
+                              ondelete='cascade')
