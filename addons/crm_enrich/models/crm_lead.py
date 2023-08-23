@@ -57,7 +57,6 @@ class Lead(models.Model):
                         lead_emails[lead.id] = normalized_email
                     if lead_emails:
                         try:
-                            # print(f'\n\n{lead_emails}\n\n')
                             enrich_response = self._request_enrich(lead_emails)
                         except Exception as e:
                             _logger.info('Sent batch %s enrich requests: failed with exception %s', len(lead_emails), e)
@@ -81,27 +80,29 @@ class Lead(models.Model):
             if not extracted_data:
                 lead.write({'enrich_done': True})
                 continue
-            values = {'enrich_done': True}
+            # values = {'enrich_done': True}
             values = {}
 
-            if not lead.website and extracted_data.get('website'):
-                values['website'] = extracted_data['website']
-            if not lead.phone and extracted_data.get('phone'):
-                values['phone'] = extracted_data['phone']
-            if not lead.partner_name and extracted_data.get('partner_name'):
-                values['partner_name'] = extracted_data['partner_name']
-            if not lead.street and extracted_data.get('address'):
-                values['street'] = extracted_data['address'].get('street')
-            if not lead.zip and extracted_data.get('address'):
-                values['zip'] = extracted_data['address'].get('zip_code')
-            if not lead.city and extracted_data.get('address'):
-                values['city'] = extracted_data['address'].get('city')
-            if not lead.country_id and extracted_data.get('address'):
-                country_code: str = extracted_data['address'].get('country_code')
-                country = self.env['res.country'].\
-                    search([('code', '=', country_code.upper())], limit=1)
-                if country:
-                    values['country_id'] = country.id
+            if not lead.website:
+                values['website'] = extracted_data.get('website')
+            if not lead.phone:
+                values['phone'] = extracted_data.get('phone')
+            if not lead.partner_name:
+                values['partner_name'] = extracted_data.get('partner_name')
+            if extracted_data.get('address'):
+                address_data = extracted_data['address']
+                if not lead.street:
+                    values['street'] = address_data.get('street')
+                if not lead.zip:
+                    values['zip'] = address_data.get('zip')
+                if not lead.city:
+                    values['city'] = address_data.get('city')
+                if not lead.country_id:
+                    country_code = address_data.get('country_code')
+                    country = self.env['res.country'].\
+                        search(['code', '=', country_code.upper()], limit=1)
+                    if country:
+                        values['country_id'] = country.id
             lead.write(values)
 
     def _request_enrich(self, lead_emails: Dict[int, EmailStr]) -> Dict:
@@ -112,7 +113,6 @@ class Lead(models.Model):
                 raise IncorrectEmailError()
             domain = lead_email[at_index + 1:]
             home_url = 'https://' + domain
-            # print(f'\n\n{home_url}\n\n')
             url_prefix = home_url
             result_data[lead_id] = aggregate_data(url_prefix, home_url)
         return result_data
