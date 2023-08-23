@@ -10,8 +10,6 @@ from pydantic import (
     EmailStr,
     HttpUrl,
 )
-
-import geopy.geocoders
 from geopy.geocoders import Nominatim
 
 from .parsers import (
@@ -44,7 +42,6 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
         social_links=home_page_parser.get_social_links(),
         site_names=home_page_parser.get_site_names()
     )
-
     contact_page_data = None
     if contact_url:
         contact_page_parser = WebsitePageParser(contact_url)
@@ -54,7 +51,6 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
             social_links=contact_page_parser.get_social_links(),
             site_names=contact_page_parser.get_site_names()
         )
-
     return {
         'home_page': home_page_data,
         'contact_page': contact_page_data
@@ -66,6 +62,7 @@ def get_data_from_linkedin(linkedin_url: HttpUrl) -> Dict[str, str]:
     linkedin_data = linkedin_parser.get_overview_data()
     linkedin_data['Address'] = linkedin_parser.get_location()
     linkedin_data['Name'] = linkedin_parser.get_title()
+    linkedin_data['Phone'] = linkedin_parser.get_phone()
     return linkedin_data
 
 
@@ -79,7 +76,6 @@ class AddressData(NamedTuple):
 
 
 def process_address_string(initial_address: AddressType) -> Optional[AddressData]:
-    geopy.geocoders.default_user_agent = 'my_app2'
     geolocator = Nominatim(user_agent='my-custom-application')
     initial_location = geolocator.geocode(initial_address)
 
@@ -163,10 +159,15 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
 
     linkedin_url: Optional[HttpUrl] =\
         get_linkedin_url_by_website_data(home_page_data) + 'about/'
+
+    address_data = None
+
     if linkedin_url:
         linkedin_data = get_data_from_linkedin(linkedin_url)
         address = linkedin_data.get('Address')
         if linkedin_data.get('Name'):
             partner_name = linkedin_data['Name']
+        if linkedin_data.get('Phone'):
+            phone = linkedin_data['Phone']
         address_data = process_address_string(address)
     return TargetDataUnit(email, phone, partner_name, address_data, website)._asdict()
