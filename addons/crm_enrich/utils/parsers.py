@@ -7,13 +7,13 @@ from bs4 import (
 )
 from typing import (
     Set,
-    List,
     Dict,
-    
+    Optional,
     TypeAlias,
 )
 from pydantic import (
     HttpUrl,
+    AnyUrl,
     EmailStr,
 )
 from collections import defaultdict
@@ -24,18 +24,58 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from .keywords import (
+    CONTACT_STRINGS,
     SOCIAL_NETWORKS,
-    ADDRESS_KEYWORDS
 )
 
 
-PARSER = 'html.parser'
+WEBSITE_PARSER = 'html.parser'
+
+LINKEDIN_LOGIN_URL = 'https://linkedin.com/uas/login'
+LINKEDIN_PARSER = 'lxml'
 
 PhoneNumber: TypeAlias = str
 AddressType: TypeAlias = str
 
 
-class EnrichParser:
+PARSER = 'html.parser'
+
+
+class SiteURLSearcher:
+    """Search for 'Contacts' page URL."""
+    def __init__(self, url_prefix: HttpUrl, home_url: HttpUrl) -> None:
+        self._url_prefix = url_prefix
+        self._home_url = home_url
+        response = requests.get(self._home_url)
+        if response.status_code == HTTPStatus.OK:
+            self._home_soup = BeautifulSoup(response.text, PARSER)
+        else:
+            raise ValueError(f"Invalid URL: {self._home_url}. Status code: {response.status_code}")
+        self._contact_url: Optional[str] = None
+
+    def is_link_to_contacts(self, link: Tag) -> bool:
+        href: AnyUrl = link.get('href')
+        text: str = link.get_text().lower()
+        for contact_string in CONTACT_STRINGS:
+            if contact_string in href or contact_string in text:
+                return True
+        return False
+
+    def _href_padding(self, href: AnyUrl) -> HttpUrl:
+        if not href.startswith(self._url_prefix):
+            href = self._url_prefix + href
+        return href
+
+    def find_contact_url(self) -> Optional[str]:
+        for link in self._home_soup.find_all('a', href=True):
+            href: str = link.get('href')
+            if self.is_link_to_contacts(link):
+                self._contact_url = href
+                return self._href_padding(href)
+        return self._contact_url
+
+
+class WebsitePageParser:
     def __init__(self, url: HttpUrl, site_name: str = None) -> None:
         self._url = url
         self._site_name = site_name
@@ -45,7 +85,7 @@ class EnrichParser:
             self._site_name = parts[0] if parts[0] != 'www' else parts[1]
         response = requests.get(self._url)
         if response.status_code == HTTPStatus.OK:
-            self._soup = BeautifulSoup(response.text, PARSER)
+            self._soup = BeautifulSoup(response.text, WEBSITE_PARSER)
         else:
             raise ValueError(f"Invalid URL: {self._url}. Status code: {response.status_code}")
         self._social_regex = r'(' + '|'.join(SOCIAL_NETWORKS) + r')'
@@ -74,25 +114,6 @@ class EnrichParser:
         email_addresses.update(email_pattern.findall(page_text))
         return email_addresses
 
-    def get_addresses(self) -> Set[AddressType]:
-        # TODO: Create more flexible and good validation
-        addresses = set()
-        element: Tag = self._soup.find(attrs={'title': 'address'})
-        if element:
-            raw_address = element.get_text()
-            cleaned_address = raw_address.strip('\n ')
-            addresses.add(cleaned_address)
-        all_texts: List[str] = []
-        for content in self._soup.stripped_strings:
-            all_texts.append(content)
-        for text in all_texts:
-            if any(char.isdigit() for char in text):
-                for key in ADDRESS_KEYWORDS:
-                    pattern = re.compile(rf'{re.escape(key)}', re.IGNORECASE)
-                    if len(text) > 8 and len(text) < 80 and re.search(pattern, text):
-                        addresses.add(text)
-        return addresses
-
     def get_site_names(self) -> defaultdict[str, int]:
         """
         This method is used to extract all names
@@ -109,25 +130,31 @@ class EnrichParser:
 
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--headless')
+        # chrome_options = webdriver.ChromeOptions()
+        # chrome_options.add_argument('--headless')
 
         service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service,
-                                       options=chrome_options)
+        self.driver = webdriver.Chrome(service=service)
         self.linkedin_url = linkedin_url
         self._linkedin_login()
         self.driver.get(linkedin_url)
         src = self.driver.page_source
-        self.soup = BeautifulSoup(src, 'lxml')
+        self.soup = BeautifulSoup(src, LINKEDIN_PARSER)
 
     def _linkedin_login(self) -> None:
-        self.driver.get('https://linkedin.com/uas/login')
+        self.driver.get(LINKEDIN_LOGIN_URL)
         username = self.driver.find_element(By.ID, 'username')
         username.send_keys('evan.madjar@datadrivemd.com')
         password = self.driver.find_element(By.ID, 'password')
-        password.send_keys('!KZT9T:sr(8s^4k')
+        password.send_keys('6cF,M6_N_(ns7y6')
         self.driver.find_element(By.XPATH, "//button[@type='submit']").click()
+
+    def get_title(self) -> Optional[str]:
+        h1_tag = self.soup.find('h1', class_='org-top-card-summary__title')
+        text = None
+        if h1_tag:
+            text = h1_tag.text.strip()
+        return text
 
     def get_overview_data(self) -> Dict[str, str]:
         about = self.soup.find('dl', {'class': 'overflow-hidden'})

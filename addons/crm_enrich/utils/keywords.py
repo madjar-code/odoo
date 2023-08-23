@@ -13,16 +13,3 @@ CONTACT_STRINGS = (
     'contact',
     'контакт',
 )
-
-# keywords to searching for address
-ADDRESS_KEYWORDS = (
-    'str.',
-    'street',
-    'highway',
-    'rd',
-    'road',
-    'united states',
-    'moldova',
-    'шос.',
-    'обл.',
-)
