@@ -1,10 +1,16 @@
 import logging
+from typing import Dict
+from pydantic import EmailStr
 from psycopg2 import OperationalError
 from odoo import _, api, fields, models, tools
-from .enrich_api import EnrichAPI
+from ..utils.aggregator import aggregate_data
 
 
 _logger = logging.getLogger(__name__)
+
+
+class IncorrectEmailError(Exception):
+    """Raises if email is incorrect."""
 
 
 class Lead(models.Model):
@@ -51,7 +57,8 @@ class Lead(models.Model):
                         lead_emails[lead.id] = normalized_email
                     if lead_emails:
                         try:
-                            enrich_response = EnrichAPI()._request_enrich(lead_emails)
+                            # print(f'\n\n{lead_emails}\n\n')
+                            enrich_response = self._request_enrich(lead_emails)
                         except Exception as e:
                             _logger.info('Sent batch %s enrich requests: failed with exception %s', len(lead_emails), e)
                         else:
@@ -77,10 +84,12 @@ class Lead(models.Model):
             values = {'enrich_done': True}
             values = {}
 
+            if not lead.website and extracted_data.get('website'):
+                values['website'] = extracted_data['website']
             if not lead.phone and extracted_data.get('phone'):
                 values['phone'] = extracted_data['phone']
-            if not lead.partner_name and extracted_data.get('site_name'):
-                values['partner_name'] = extracted_data['site_name']
+            if not lead.partner_name and extracted_data.get('partner_name'):
+                values['partner_name'] = extracted_data['partner_name']
             if not lead.street and extracted_data.get('address'):
                 values['street'] = extracted_data['address'].get('street')
             if not lead.zip and extracted_data.get('address'):
@@ -94,6 +103,19 @@ class Lead(models.Model):
                 if country:
                     values['country_id'] = country.id
             lead.write(values)
+
+    def _request_enrich(self, lead_emails: Dict[int, EmailStr]) -> Dict:
+        result_data = dict()
+        for lead_id, lead_email in lead_emails.items():
+            at_index = lead_email.find('@')
+            if at_index == -1:
+                raise IncorrectEmailError()
+            domain = lead_email[at_index + 1:]
+            home_url = 'https://' + domain
+            # print(f'\n\n{home_url}\n\n')
+            url_prefix = home_url
+            result_data[lead_id] = aggregate_data(url_prefix, home_url)
+        return result_data
 
     def _merge_get_fields_specific(self):
         return {
