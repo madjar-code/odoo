@@ -156,6 +156,13 @@ class LinkedInEnrichParser:
             text = h1_tag.text.strip()
         return text
 
+    def get_phone(self) -> Optional[PhoneNumber]:
+        phone_element = self.soup.find('a', href=lambda x: x.startswith('tel:'))
+        phone = None
+        if phone_element:
+            phone = phone_element['href'][4:]
+        return phone
+
     def get_overview_data(self) -> Dict[str, str]:
         about = self.soup.find('dl', {'class': 'overflow-hidden'})
         dt_elements = about.find_all('dt')
@@ -168,8 +175,10 @@ class LinkedInEnrichParser:
         return data
 
     def get_location(self) -> str:
-        locations = self.soup.find('div', {'class': 'org-locations-module__card-spacing'})
-        address_element = locations.find('p', class_='t-14 t-black--light t-normal break-words')
+        locations = self.soup.find(
+            'div', {'class': 'org-locations-module__card-spacing'})
+        address_element = locations.find(
+            'p', class_='t-14 t-black--light t-normal break-words')
         if address_element:
             address_text = address_element.get_text(strip=True)
         return address_text
