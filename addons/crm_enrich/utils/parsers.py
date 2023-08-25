@@ -27,6 +27,11 @@ from .keywords import (
     CONTACT_STRINGS,
     SOCIAL_NETWORKS,
 )
+from .enrich_private import (
+    LINKEDIN_LOGIN_1,
+    LINKEDIN_PASSWORD_1,
+    USER_AGENT,
+)
 
 
 WEBSITE_PARSER = 'html.parser'
@@ -62,7 +67,8 @@ class SiteURLSearcher:
         return False
 
     def _href_padding(self, href: AnyUrl) -> HttpUrl:
-        if not href.startswith(self._url_prefix):
+        if not href.startswith(self._url_prefix)\
+                and not href.startswith('http'):
             href = self._url_prefix + href
         return href
 
@@ -83,7 +89,10 @@ class WebsitePageParser:
             parsed_url = urlparse(url)
             parts = parsed_url.netloc.split('.')
             self._site_name = parts[0] if parts[0] != 'www' else parts[1]
-        response = requests.get(self._url)
+        try:
+            response = requests.get(self._url)
+        except Exception as e:
+            print(f'\n\n{e}\n\n')
         if response.status_code == HTTPStatus.OK:
             self._soup = BeautifulSoup(response.text, WEBSITE_PARSER)
         else:
@@ -130,11 +139,12 @@ class WebsitePageParser:
 
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
-        # chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument('--headless')
-
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument(USER_AGENT)
         service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service)
+        self.driver = webdriver.Chrome(service=service,
+                                       options=chrome_options)
         self.linkedin_url = linkedin_url
         self._linkedin_login()
         self.driver.get(linkedin_url)
@@ -144,9 +154,9 @@ class LinkedInEnrichParser:
     def _linkedin_login(self) -> None:
         self.driver.get(LINKEDIN_LOGIN_URL)
         username = self.driver.find_element(By.ID, 'username')
-        username.send_keys('evan.madjar@datadrivemd.com')
+        username.send_keys(LINKEDIN_LOGIN_1)
         password = self.driver.find_element(By.ID, 'password')
-        password.send_keys('6cF,M6_N_(ns7y6')
+        password.send_keys(LINKEDIN_PASSWORD_1)
         self.driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
     def get_title(self) -> Optional[str]:
