@@ -53,7 +53,6 @@ class Lead(models.Model):
                                 'crm_enrich.mail_message_lead_enrich_no_email',
                                 subtype_id=self.env.ref('mail.mt_note').id
                             )
-                        # TODO: Add mail blacklist analyzer.
                         lead_emails[lead.id] = normalized_email
                     if lead_emails:
                         try:
@@ -82,7 +81,8 @@ class Lead(models.Model):
                 continue
             # values = {'enrich_done': True}
             values = {}
-
+            print(f'\n\n{extracted_data}\n\n')
+            
             if not lead.website:
                 values['website'] = extracted_data.get('website')
             if not lead.phone:
@@ -94,15 +94,37 @@ class Lead(models.Model):
                 if not lead.street:
                     values['street'] = address_data.get('street')
                 if not lead.zip:
-                    values['zip'] = address_data.get('zip')
+                    values['zip'] = address_data.get('zip_code')
                 if not lead.city:
                     values['city'] = address_data.get('city')
                 if not lead.country_id:
                     country_code = address_data.get('country_code')
-                    country = self.env['res.country'].\
-                        search(['code', '=', country_code.upper()], limit=1)
+                    if country_code:
+                        country = self.env['res.country'].\
+                            search([('code', '=', country_code.upper())], limit=1)
                     if country:
                         values['country_id'] = country.id
+
+            crm_property_value_table = self.env['crm.prop.value']
+            crm_property_description_table = self.env['crm.prop.description']
+
+            if extracted_data.get('social_links'):
+                prop_description = crm_property_description_table.sudo().search(
+                        [('name', '=', 'social_link')], limit=1)
+                if not prop_description:
+                    prop_description = crm_property_description_table.sudo().create({
+                        'name': 'social_link',
+                        'prop_type': 'char',
+                    })
+                for social_link in extracted_data['social_links']:
+                    if crm_property_value_table.sudo().search(
+                            [('value', '=', social_link)], limit=1):
+                        continue
+                    crm_property_value_table.sudo().create({
+                        'value': social_link,
+                        'prop_description_id': prop_description[0].id,
+                        'lead_id': lead.id
+                    })
             lead.write(values)
 
     def _request_enrich(self, lead_emails: Dict[int, EmailStr]) -> Dict:
