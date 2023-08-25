@@ -54,3 +54,6 @@ About In-App Purchases.txt
 
 # images
 uploads
+
+# private data
+enrich_private.py
