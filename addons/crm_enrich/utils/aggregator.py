@@ -10,13 +10,18 @@ from pydantic import (
     EmailStr,
     HttpUrl,
 )
-from geopy.geocoders import Nominatim
-
+from pycountry_convert import\
+    country_name_to_country_alpha2
+from geopy.geocoders import (
+    Nominatim,
+    Bing,
+)
 from .parsers import (
     SiteURLSearcher,
     WebsitePageParser,
     LinkedInEnrichParser,
 )
+from .enrich_private import BING_API_KEY
 
 
 PhoneNumber: TypeAlias = str
@@ -75,7 +80,35 @@ class AddressData(NamedTuple):
     country_code: Optional[str]
 
 
-def process_address_string(initial_address: AddressType) -> Optional[AddressData]:
+def process_address_string_by_bing(
+        initial_address: AddressType) -> Optional[AddressData]:
+    geolocator = Bing(api_key=BING_API_KEY)
+    initial_location = geolocator.geocode(initial_address)
+
+    if not initial_location:
+        return
+
+    latitude, longitude = initial_location.latitude, initial_location.longitude
+
+    location = geolocator.reverse(f'{latitude},{longitude}')
+    address = location.raw['address']
+    country = address.get('countryRegion')
+    country_code = country_name_to_country_alpha2(country)
+    locality = address.get('locality')
+    street = address.get('addressLine')
+    zip_code = address.get('postalCode')
+    return AddressData(
+        country=country,
+        country_code=country_code,
+        state=None,
+        city=locality,
+        zip_code=zip_code,
+        street=street,
+    )._asdict()
+
+
+def process_address_string_by_nominatim(
+        initial_address: AddressType) -> Optional[AddressData]:
     geolocator = Nominatim(user_agent='my-custom-application')
     initial_location = geolocator.geocode(initial_address)
 
@@ -88,18 +121,18 @@ def process_address_string(initial_address: AddressType) -> Optional[AddressData
     address = location.raw['address']
     country = address.get('country')
     country_code = address.get('country_code')
-    road = address.get('road')
+    street = address.get('house_number') +\
+             ' ' + address.get('road')
     state = address.get('state')
     city = address.get('city')    
     zip_code = address.get('postcode')
-
     return AddressData(
         country=country,
         country_code=country_code,
-        state=state,
+        state=None,
         city=city,
         zip_code=zip_code,
-        street=road
+        street=street,
     )._asdict()
 
 
@@ -121,6 +154,7 @@ def get_linkedin_url_by_website_data(
 class TargetDataUnit(NamedTuple):
     email: Optional[EmailStr]
     phone: Optional[PhoneNumber]
+    social_links: Optional[Set[HttpUrl]]
     partner_name: Optional[str]
     address: Optional[AddressData]
     website: Optional[HttpUrl]
@@ -134,6 +168,7 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
     email = None
     phone = None
     partner_name = None
+    social_links = None
     address = None
     website = home_url
 
@@ -142,32 +177,45 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
             email = home_page_data.email_addresses.pop()
         if home_page_data.phone_numbers:
             phone = home_page_data.phone_numbers.pop()
-        if home_page_data.site_names:
-            site_names: DefaultDict = contact_page_data.site_names
-            max_name = max(site_names, key=site_names.get)
-            partner_name = max_name
-
+        # if home_page_data.site_names:
+        #     site_names: DefaultDict = home_page_data.site_names
+        #     max_name = max(site_names, key=site_names.get)
+        #     partner_name = max_name
+    
     if contact_page_data:
         if contact_page_data.email_addresses:
             email = contact_page_data.email_addresses.pop()
         if contact_page_data.phone_numbers:
             phone = contact_page_data.phone_numbers.pop()
+        if contact_page_data.social_links:
+            social_links = contact_page_data.social_links
         if contact_page_data.site_names:
             site_names: DefaultDict = contact_page_data.site_names
             max_name = max(site_names, key=site_names.get)
             partner_name = max_name
-
-    linkedin_url: Optional[HttpUrl] =\
-        get_linkedin_url_by_website_data(home_page_data) + 'about/'
+    try:
+        linkedin_url: Optional[HttpUrl] =\
+            get_linkedin_url_by_website_data(home_page_data) + 'about/'
+    except Exception:
+        linkedin_url = None
 
     address_data = None
-
-    if linkedin_url:
-        linkedin_data = get_data_from_linkedin(linkedin_url)
-        address = linkedin_data.get('Address')
-        if linkedin_data.get('Name'):
-            partner_name = linkedin_data['Name']
-        if linkedin_data.get('Phone'):
-            phone = linkedin_data['Phone']
-        address_data = process_address_string(address)
-    return TargetDataUnit(email, phone, partner_name, address_data, website)._asdict()
+    # if linkedin_url:
+    #     try:
+    #         linkedin_data = get_data_from_linkedin(linkedin_url)
+    #         address = linkedin_data.get('Address')
+    #         if linkedin_data.get('Name'):
+    #             partner_name = linkedin_data['Name']
+    #         if linkedin_data.get('Phone'):
+    #             phone = linkedin_data['Phone']
+    #         address_data = process_address_string_by_bing(address)
+    #     except Exception:
+    #         address_data = None
+    return TargetDataUnit(
+        email=email, 
+        phone=phone,
+        partner_name=partner_name,
+        social_links=social_links,
+        address=address_data,
+        website=website
+    )._asdict()
