@@ -81,8 +81,14 @@ class Lead(models.Model):
                 continue
             # values = {'enrich_done': True}
             values = {}
-            print(f'\n\n{extracted_data}\n\n')
             
+            initial_email = lead.email_from
+            extracted_email = extracted_data.get('email')
+            
+            if extracted_email and initial_email:
+                if extracted_email != initial_email:
+                    values['email_cc'] = extracted_email
+
             if not lead.website:
                 values['website'] = extracted_data.get('website')
             if not lead.phone:
