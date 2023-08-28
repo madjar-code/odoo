@@ -23,6 +23,7 @@ from collections import defaultdict
 from http import HTTPStatus
 from selenium import webdriver
 from bs4 import BeautifulSoup
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
@@ -102,8 +103,8 @@ class WebsitePageParser:
             self._site_name = parts[0] if parts[0] != 'www' else parts[1]
         try:
             response = requests.get(self._url)
-        except Exception as e:
-            print(f'\n\n{e}\n\n')
+        except Exception:
+            pass
         if response.status_code == HTTPStatus.OK:
             self._soup = BeautifulSoup(response.text, WEBSITE_PARSER)
         else:
@@ -150,12 +151,18 @@ class WebsitePageParser:
 
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
-        chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument('--headless')
-        chrome_options.add_argument(USER_AGENT)
-        service = Service(DRIVER_PATH)
-        self.browser = webdriver.Chrome(service=service,
-                                        options=chrome_options)
+        # chrome_options = webdriver.ChromeOptions()
+        # # chrome_options.add_argument('--headless')
+        # chrome_options.add_argument(USER_AGENT)
+        # service = Service(DRIVER_PATH)
+        # self.browser = webdriver.Chrome(service=service,
+        #                                 options=chrome_options)
+        options = uc.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('proxy-server=106.122.8.34:3128')
+        self.browser = uc.Chrome(
+            options=options
+        )
         self.browser.get(LINKEDIN_LOGIN_URL)
         self.linkedin_url = linkedin_url
         try:
