@@ -57,3 +57,4 @@ uploads
 
 # private data
 enrich_private.py
+cookies/

@@ -1,5 +1,6 @@
-import time
 import re
+import time
+import pickle
 import requests
 from urllib.parse import urlparse
 from bs4 import (
@@ -152,21 +153,35 @@ class LinkedInEnrichParser:
         # chrome_options.add_argument('--headless')
         chrome_options.add_argument(USER_AGENT)
         service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service,
-                                       options=chrome_options)
+        self.browser = webdriver.Chrome(service=service,
+                                        options=chrome_options)
+        self.browser.get(LINKEDIN_LOGIN_URL)
         self.linkedin_url = linkedin_url
-        self._linkedin_login()
-        self.driver.get(linkedin_url)
-        src = self.driver.page_source
+        try:
+            cookies = pickle.load(open('cookies/linkedin_cookies.pkl', 'rb'))
+            for cookie in cookies:
+                cookie['domain'] = '.linkedin.com'
+                try:
+                    self.browser.add_cookie(cookie)
+                except Exception:
+                    pass
+            time.sleep(0.5)
+        except FileNotFoundError:
+            self._linkedin_login()
+            with open('cookies/linkedin_cookies.pkl', 'wb') as cookies_file:
+                pickle.dump(self.browser.get_cookies(), cookies_file)
+
+        self.browser.get(linkedin_url)
+        src = self.browser.page_source
         self.soup = BeautifulSoup(src, LINKEDIN_PARSER)
 
     def _linkedin_login(self) -> None:
-        self.driver.get(LINKEDIN_LOGIN_URL)
-        username = self.driver.find_element(By.ID, 'username')
+        self.browser.get(LINKEDIN_LOGIN_URL)
+        username = self.browser.find_element(By.ID, 'username')
         username.send_keys(LINKEDIN_LOGIN_1)
-        password = self.driver.find_element(By.ID, 'password')
+        password = self.browser.find_element(By.ID, 'password')
         password.send_keys(LINKEDIN_PASSWORD_1)
-        self.driver.find_element(By.XPATH, "//button[@type='submit']").click()
+        self.browser.find_element(By.XPATH, "//button[@type='submit']").click()
 
     def get_title(self) -> Optional[str]:
         h1_tag = self.soup.find('h1', class_='org-top-card-summary__title')
@@ -209,17 +224,31 @@ class FacebookParser:
         # chrome_options.add_argument('--headless')
         chrome_options.add_argument(USER_AGENT)
         service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service,
-                                       options=chrome_options)
+        self.browser = webdriver.Chrome(service=service,
+                                        options=chrome_options)
+        self.browser.get(FACEBOOK_LOGIN_URL)
         self.facebook_url = facebook_url
-        self._facebook_login()
-        self.driver.get(facebook_url)
-        src = self.driver.page_source
+
+        try:
+            cookies = pickle.load(open('cookies/facebook_cookies.pkl', 'rb'))
+            for cookie in cookies:
+                cookie['domain'] = '.facebook.com'
+                try:
+                    self.browser.add_cookie(cookie)
+                except Exception:
+                    pass
+        except FileNotFoundError:
+            self._facebook_login()
+            with open('cookies/facebook_cookies.pkl', 'wb') as cookies_file:
+                pickle.dump(self.browser.get_cookies(), cookies_file)
+
+        self.browser.get(facebook_url)
+        src = self.browser.page_source
         self.soup = BeautifulSoup(src, FACEBOOK_PARSER)
 
     def _facebook_login(self) -> None:
-        self.driver.get(FACEBOOK_LOGIN_URL)
-        wait = WebDriverWait(self.driver, 30)
+        self.browser.get(FACEBOOK_LOGIN_URL)
+        wait = WebDriverWait(self.browser, 30)
         email = wait.until(EC.visibility_of_element_located((By.NAME, 'email')))
         email.send_keys(FACEBOOK_LOGIN_1)
         password = wait.until(EC.visibility_of_element_located((By.NAME, 'pass')))
