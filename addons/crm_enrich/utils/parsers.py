@@ -1,3 +1,4 @@
+import time
 import re
 import requests
 from urllib.parse import urlparse
@@ -7,6 +8,7 @@ from bs4 import (
 )
 from typing import (
     Set,
+    List,
     Dict,
     Optional,
     TypeAlias,
@@ -21,7 +23,10 @@ from http import HTTPStatus
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from .keywords import (
     CONTACT_STRINGS,
@@ -30,18 +35,22 @@ from .keywords import (
 from .enrich_private import (
     LINKEDIN_LOGIN_1,
     LINKEDIN_PASSWORD_1,
+    FACEBOOK_LOGIN_1,
+    FACEBOOK_PASSWORD_1,
     USER_AGENT,
 )
 
 
 WEBSITE_PARSER = 'html.parser'
 
+FACEBOOK_LOGIN_URL = 'http://facebook.com'
+FACEBOOK_PARSER = 'html.parser'
+
 LINKEDIN_LOGIN_URL = 'https://linkedin.com/uas/login'
 LINKEDIN_PARSER = 'lxml'
 
 PhoneNumber: TypeAlias = str
 AddressType: TypeAlias = str
-
 
 PARSER = 'html.parser'
 
@@ -140,7 +149,7 @@ class WebsitePageParser:
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--headless')
         chrome_options.add_argument(USER_AGENT)
         service = Service(ChromeDriverManager().install())
         self.driver = webdriver.Chrome(service=service,
@@ -192,3 +201,55 @@ class LinkedInEnrichParser:
         if address_element:
             address_text = address_element.get_text(strip=True)
         return address_text
+
+
+class FacebookParser:
+    def __init__(self, facebook_url: HttpUrl) -> None:
+        chrome_options = webdriver.ChromeOptions()
+        # chrome_options.add_argument('--headless')
+        chrome_options.add_argument(USER_AGENT)
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service,
+                                       options=chrome_options)
+        self.facebook_url = facebook_url
+        self._facebook_login()
+        self.driver.get(facebook_url)
+        src = self.driver.page_source
+        self.soup = BeautifulSoup(src, FACEBOOK_PARSER)
+
+    def _facebook_login(self) -> None:
+        self.driver.get(FACEBOOK_LOGIN_URL)
+        wait = WebDriverWait(self.driver, 30)
+        email = wait.until(EC.visibility_of_element_located((By.NAME, 'email')))
+        email.send_keys(FACEBOOK_LOGIN_1)
+        password = wait.until(EC.visibility_of_element_located((By.NAME, 'pass')))
+        password.send_keys(FACEBOOK_PASSWORD_1)
+        password.send_keys(Keys.RETURN)
+
+    def get_title(self) -> Optional[str]:
+        h1_tag = self.soup.find('h1', class_='x1heor9g x1qlqyl8 x1pd3egz x1a2a7pz')
+        text = None
+        if h1_tag:
+            text = h1_tag.text.strip()
+        return text
+
+    def get_about_info(self) -> Dict[str, Optional[str]]:
+        span_elements: List[Tag] = self.soup.find_all('span')
+        text_list: List[str] = []
+
+        for element in span_elements:
+            element_text = element.get_text(strip=True)
+            if len(element_text) >= 1 and\
+                    element_text not in text_list:
+                text_list.append(element_text)
+        data = {
+            'Address': None,
+            'Website': None,
+            'Mobile': None,
+            'Email': None,
+        }
+        for i, text in enumerate(text_list):
+            if text in data:
+                data[text] = text_list[i-1]
+
+        return data
