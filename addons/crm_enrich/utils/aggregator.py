@@ -20,6 +20,7 @@ from .parsers import (
     SiteURLSearcher,
     WebsitePageParser,
     LinkedInEnrichParser,
+    FacebookParser,
 )
 from .enrich_private import BING_API_KEY
 
@@ -71,6 +72,13 @@ def get_data_from_linkedin(linkedin_url: HttpUrl) -> Dict[str, str]:
     return linkedin_data
 
 
+def get_data_from_facebook(facebook_url: HttpUrl) -> Dict[str, Optional[str]]:
+    facebook_parser = FacebookParser(facebook_url)
+    facebook_data = facebook_parser.get_about_info()
+    facebook_data['Name'] = facebook_parser.get_title()
+    return facebook_data
+
+
 class AddressData(NamedTuple):
     street: Optional[str]
     city: Optional[str]
@@ -97,6 +105,7 @@ def process_address_string_by_bing(
     locality = address.get('locality')
     street = address.get('addressLine')
     zip_code = address.get('postalCode')
+
     return AddressData(
         country=country,
         country_code=country_code,
@@ -151,6 +160,13 @@ def get_linkedin_url_by_website_data(
             return social_link
 
 
+def get_facebook_url_by_website_data(
+        website_page_data: WebsitePageData) -> Optional[HttpUrl]:
+    for social_link in website_page_data.social_links:
+        if 'facebook' in social_link:
+            return social_link
+
+
 class TargetDataUnit(NamedTuple):
     email: Optional[EmailStr]
     phone: Optional[PhoneNumber]
@@ -171,12 +187,13 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
     social_links = None
     address = None
     website = home_url
-
     if home_page_data:
         if home_page_data.email_addresses:
             email = home_page_data.email_addresses.pop()
         if home_page_data.phone_numbers:
             phone = home_page_data.phone_numbers.pop()
+        if home_page_data.social_links:
+            social_links = home_page_data.social_links
         # if home_page_data.site_names:
         #     site_names: DefaultDict = home_page_data.site_names
         #     max_name = max(site_names, key=site_names.get)
@@ -199,18 +216,37 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
     except Exception:
         linkedin_url = None
 
+    try:
+        facebook_url: Optional[HttpUrl] =\
+            get_facebook_url_by_website_data(home_page_data) + '&sk=about'
+    except Exception:
+        facebook_url = None
+
     address_data = None
-    # if linkedin_url:
-    #     try:
-    #         linkedin_data = get_data_from_linkedin(linkedin_url)
-    #         address = linkedin_data.get('Address')
-    #         if linkedin_data.get('Name'):
-    #             partner_name = linkedin_data['Name']
-    #         if linkedin_data.get('Phone'):
-    #             phone = linkedin_data['Phone']
-    #         address_data = process_address_string_by_bing(address)
-    #     except Exception:
-    #         address_data = None
+    if linkedin_url:
+        try:
+            linkedin_data = get_data_from_linkedin(linkedin_url)
+            address = linkedin_data.get('Address')
+            if linkedin_data.get('Name'):
+                partner_name = linkedin_data['Name']
+            if linkedin_data.get('Phone'):
+                phone = linkedin_data['Phone']
+            address_data = process_address_string_by_bing(address)
+        except Exception:
+            address_data = None
+    elif facebook_url:
+        try:
+            facebook_data = get_data_from_facebook(facebook_url)
+            address = facebook_data.get('Address')
+            if facebook_data.get('Name'):
+                partner_name = facebook_data['Name']
+            if facebook_data.get('Mobile'):
+                phone = facebook_data['Mobile']
+            if facebook_data.get('Email'):
+                email = facebook_data['Email']
+            address_data = process_address_string_by_bing(address)
+        except Exception:
+            address_data = None
     return TargetDataUnit(
         email=email, 
         phone=phone,
