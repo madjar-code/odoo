@@ -225,11 +225,17 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
 
     try:
         facebook_url: Optional[HttpUrl] =\
-            get_facebook_url_by_website_data(home_page_data) + '&sk=about'
+            get_facebook_url_by_website_data(home_page_data)
+        if 'profile.php?id=' in facebook_url:
+            facebook_url += '&sk=about'
+        else:
+            facebook_url += '/about/'
     except Exception:
         facebook_url = None
 
     address_data = None
+    linkedin_data = None
+    facebook_data = None
     if linkedin_url:
         try:
             linkedin_data = get_data_from_linkedin(linkedin_url)
@@ -238,7 +244,8 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
                 partner_name = linkedin_data['Name']
             if linkedin_data.get('Phone'):
                 phone = linkedin_data['Phone']
-            address_data = process_address_string_by_bing(address)
+            if address:
+                address_data = process_address_string_by_bing(address)
         except Exception:
             address_data = None
 
@@ -247,12 +254,14 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
             facebook_data = get_data_from_facebook(facebook_url)
             address = facebook_data.get('Address')
             if facebook_data.get('Name'):
-                partner_name = facebook_data['Name']
+                facebook_name = facebook_data['Name'].split('\xa0')[0]
+                partner_name = facebook_name
             if facebook_data.get('Mobile'):
                 phone = facebook_data['Mobile']
             if facebook_data.get('Email'):
                 email = facebook_data['Email']
-            address_data = process_address_string_by_bing(address)
+            if address:
+                address_data = process_address_string_by_bing(address)
         except Exception:
             address_data = None
     return TargetDataUnit(
