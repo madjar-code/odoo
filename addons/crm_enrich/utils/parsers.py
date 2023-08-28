@@ -39,6 +39,7 @@ from .enrich_private import (
     FACEBOOK_LOGIN_1,
     FACEBOOK_PASSWORD_1,
     USER_AGENT,
+    DRIVER_PATH,
 )
 
 
@@ -152,7 +153,7 @@ class LinkedInEnrichParser:
         chrome_options = webdriver.ChromeOptions()
         # chrome_options.add_argument('--headless')
         chrome_options.add_argument(USER_AGENT)
-        service = Service(ChromeDriverManager().install())
+        service = Service(DRIVER_PATH)
         self.browser = webdriver.Chrome(service=service,
                                         options=chrome_options)
         self.browser.get(LINKEDIN_LOGIN_URL)
@@ -165,7 +166,7 @@ class LinkedInEnrichParser:
                     self.browser.add_cookie(cookie)
                 except Exception:
                     pass
-            time.sleep(0.5)
+            time.sleep(1)
         except FileNotFoundError:
             self._linkedin_login()
             with open('cookies/linkedin_cookies.pkl', 'wb') as cookies_file:
@@ -223,7 +224,7 @@ class FacebookParser:
         chrome_options = webdriver.ChromeOptions()
         # chrome_options.add_argument('--headless')
         chrome_options.add_argument(USER_AGENT)
-        service = Service(ChromeDriverManager().install())
+        service = Service(DRIVER_PATH)
         self.browser = webdriver.Chrome(service=service,
                                         options=chrome_options)
         self.browser.get(FACEBOOK_LOGIN_URL)

@@ -64,19 +64,25 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
 
 
 def get_data_from_linkedin(linkedin_url: HttpUrl) -> Dict[str, str]:
-    linkedin_parser = LinkedInEnrichParser(linkedin_url)
-    linkedin_data = linkedin_parser.get_overview_data()
-    linkedin_data['Address'] = linkedin_parser.get_location()
-    linkedin_data['Name'] = linkedin_parser.get_title()
-    linkedin_data['Phone'] = linkedin_parser.get_phone()
-    return linkedin_data
+    try:
+        linkedin_parser = LinkedInEnrichParser(linkedin_url)
+        linkedin_data = linkedin_parser.get_overview_data()
+        linkedin_data['Address'] = linkedin_parser.get_location()
+        linkedin_data['Name'] = linkedin_parser.get_title()
+        linkedin_data['Phone'] = linkedin_parser.get_phone()
+        return linkedin_data
+    except:
+        return None
 
 
 def get_data_from_facebook(facebook_url: HttpUrl) -> Dict[str, Optional[str]]:
-    facebook_parser = FacebookParser(facebook_url)
-    facebook_data = facebook_parser.get_about_info()
-    facebook_data['Name'] = facebook_parser.get_title()
-    return facebook_data
+    try:
+        facebook_parser = FacebookParser(facebook_url)
+        facebook_data = facebook_parser.get_about_info()
+        facebook_data['Name'] = facebook_parser.get_title()
+        return facebook_data
+    except:
+        return None
 
 
 class AddressData(NamedTuple):
@@ -187,6 +193,7 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
     social_links = None
     address = None
     website = home_url
+
     if home_page_data:
         if home_page_data.email_addresses:
             email = home_page_data.email_addresses.pop()
@@ -234,7 +241,8 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
             address_data = process_address_string_by_bing(address)
         except Exception:
             address_data = None
-    elif facebook_url:
+
+    if facebook_url and not linkedin_data:
         try:
             facebook_data = get_data_from_facebook(facebook_url)
             address = facebook_data.get('Address')
