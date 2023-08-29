@@ -151,14 +151,6 @@ def process_address_string_by_nominatim(
     )._asdict()
 
 
-FIELDS = [
-    'email',
-    'phone',
-    'partner_name',
-    'address',
-    'website'
-]
-
 def get_linkedin_url_by_website_data(
         website_page_data: WebsitePageData) -> Optional[HttpUrl]:
     for social_link in website_page_data.social_links:
