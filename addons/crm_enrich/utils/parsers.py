@@ -1,5 +1,6 @@
 import re
 import time
+import random
 import pickle
 import requests
 from urllib.parse import urlparse
@@ -39,7 +40,7 @@ from .enrich_private import (
     LINKEDIN_PASSWORD_1,
     FACEBOOK_LOGIN_1,
     FACEBOOK_PASSWORD_1,
-    USER_AGENT,
+    USER_AGENTS,
     DRIVER_PATH,
 )
 
@@ -151,15 +152,10 @@ class WebsitePageParser:
 
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
-        # chrome_options = webdriver.ChromeOptions()
-        # # chrome_options.add_argument('--headless')
-        # chrome_options.add_argument(USER_AGENT)
-        # service = Service(DRIVER_PATH)
-        # self.browser = webdriver.Chrome(service=service,
-        #                                 options=chrome_options)
         options = uc.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument('proxy-server=106.122.8.34:3128')
+        # options.add_argument('--headless')
+        user_agent = random.choice(USER_AGENTS)
+        options.add_argument(f'user-agent={user_agent}')
         self.browser = uc.Chrome(
             options=options
         )
@@ -228,12 +224,13 @@ class LinkedInEnrichParser:
 
 class FacebookParser:
     def __init__(self, facebook_url: HttpUrl) -> None:
-        chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument('--headless')
-        chrome_options.add_argument(USER_AGENT)
         service = Service(DRIVER_PATH)
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        user_agent = random.choice(USER_AGENTS)
+        options.add_argument(f'user-agent={user_agent}')
         self.browser = webdriver.Chrome(service=service,
-                                        options=chrome_options)
+                                        options=options)
         self.browser.get(FACEBOOK_LOGIN_URL)
         self.facebook_url = facebook_url
 
