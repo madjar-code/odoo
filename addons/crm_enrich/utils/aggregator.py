@@ -38,25 +38,35 @@ class WebsitePageData(NamedTuple):
 
 def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
         -> Dict[str, Optional[WebsitePageData]]:
-    site_url_searcher = SiteURLSearcher(url_prefix, home_url)
-    contact_url = site_url_searcher.find_contact_url()
+    contact_url = None
+    try:
+        site_url_searcher = SiteURLSearcher(url_prefix, home_url)
+        contact_url = site_url_searcher.find_contact_url()
+        home_page_parser = WebsitePageParser(home_url)
+        home_page_data = WebsitePageData(
+            email_addresses=home_page_parser.get_email_addresses(),
+            phone_numbers=home_page_parser.get_phone_numbers(),
+            social_links=home_page_parser.get_social_links(),
+            site_names=home_page_parser.get_site_names()
+        )
+    except Exception as e:
+        print(f'\n\n{e}\n\n')
+        print('Problem with home page URL')
 
-    home_page_parser = WebsitePageParser(home_url)
-    home_page_data = WebsitePageData(
-        email_addresses=home_page_parser.get_email_addresses(),
-        phone_numbers=home_page_parser.get_phone_numbers(),
-        social_links=home_page_parser.get_social_links(),
-        site_names=home_page_parser.get_site_names()
-    )
     contact_page_data = None
     if contact_url:
-        contact_page_parser = WebsitePageParser(contact_url)
-        contact_page_data = WebsitePageData(
-            email_addresses=contact_page_parser.get_email_addresses(),
-            phone_numbers=contact_page_parser.get_phone_numbers(),
-            social_links=contact_page_parser.get_social_links(),
-            site_names=contact_page_parser.get_site_names()
-        )
+        try:
+            contact_page_parser = WebsitePageParser(contact_url)
+            contact_page_data = WebsitePageData(
+                email_addresses=contact_page_parser.get_email_addresses(),
+                phone_numbers=contact_page_parser.get_phone_numbers(),
+                social_links=contact_page_parser.get_social_links(),
+                site_names=contact_page_parser.get_site_names()
+            )
+        except Exception as e:
+            print(f'\n\n{e}\n\n')
+            print('Problem with contact page URL')
+
     return {
         'home_page': home_page_data,
         'contact_page': contact_page_data
@@ -193,11 +203,7 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
             phone = home_page_data.phone_numbers.pop()
         if home_page_data.social_links:
             social_links = home_page_data.social_links
-        # if home_page_data.site_names:
-        #     site_names: DefaultDict = home_page_data.site_names
-        #     max_name = max(site_names, key=site_names.get)
-        #     partner_name = max_name
-    
+
     if contact_page_data:
         if contact_page_data.email_addresses:
             email = contact_page_data.email_addresses.pop()
@@ -209,11 +215,15 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
             site_names: DefaultDict = contact_page_data.site_names
             max_name = max(site_names, key=site_names.get)
             partner_name = max_name
-    try:
-        linkedin_url: Optional[HttpUrl] =\
-            get_linkedin_url_by_website_data(home_page_data) + 'about/'
-    except Exception:
-        linkedin_url = None
+
+    linkedin_url_1: Optional[HttpUrl] =\
+        get_linkedin_url_by_website_data(home_page_data)
+    linkedin_url = None
+    if linkedin_url_1:
+        if linkedin_url_1.endswith('/'):
+            linkedin_url = linkedin_url_1 + 'about/'
+        else:
+            linkedin_url = linkedin_url_1 + '/about/'
 
     try:
         facebook_url: Optional[HttpUrl] =\
@@ -221,7 +231,7 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
         if 'profile.php?id=' in facebook_url:
             facebook_url += '&sk=about'
         else:
-            facebook_url += '/about/'
+            facebook_url += 'about/' if facebook_url.endswith('/') else '/about/'
     except Exception:
         facebook_url = None
 
