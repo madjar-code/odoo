@@ -296,3 +296,37 @@ class FacebookParser:
                 data[text] = text_list[i-1]
 
         return data
+
+
+class PersonalFacebookParser(FacebookParser):
+    def get_about_info(self) -> Dict[str, Optional[str | set]]:
+        span_elements: List[Tag] = self.soup.find_all('span')
+        text_list = []
+
+        for element in span_elements:
+            element_text = element.get_text(strip=True)
+            if len(element_text) >= 1 and\
+                    element_text not in text_list:
+                text_list.append(element_text)
+
+        result = {
+            'Website': None,
+            'Mobile': None,
+            'Email': None,
+            'Social Links': set(),
+        }
+    
+        SOCIAL_LINKS = {
+            'Instagram': 'https://instagram.com/',
+            'LinkedIn': 'https://linkedin.com/in/',
+        }
+    
+        for i, text in enumerate(text_list):
+            if text in result:
+                result[text] = text_list[i-1]
+            if text in SOCIAL_LINKS:
+                social_username: str = text_list[i-1]
+                social_prefix: HttpUrl = SOCIAL_LINKS[text]
+                social_link: HttpUrl = social_prefix + social_username
+                result['Social Links'].add(social_link)
+        return result
