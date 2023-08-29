@@ -84,10 +84,15 @@ class Lead(models.Model):
             
             initial_email = lead.email_from
             extracted_email = extracted_data.get('email')
-            
             if extracted_email and initial_email:
                 if extracted_email != initial_email:
                     values['email_cc'] = extracted_email
+
+            initial_phone = lead.phone
+            extracted_phone = extracted_data.get('phone')
+            if extracted_phone and initial_phone:
+                if extracted_phone != initial_phone:
+                    values['mobile'] = extracted_phone
 
             if not lead.website:
                 values['website'] = extracted_data.get('website')
@@ -124,7 +129,8 @@ class Lead(models.Model):
                     })
                 for social_link in extracted_data['social_links']:
                     if crm_property_value_table.sudo().search(
-                            [('value', '=', social_link)], limit=1):
+                            [('value', '=', social_link),
+                             ('lead_id', '=', lead.id)], limit=1):
                         continue
                     crm_property_value_table.sudo().create({
                         'value': social_link,
