@@ -30,7 +30,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 from .keywords import (
     CONTACT_STRINGS,
     SOCIAL_NETWORKS,
@@ -64,7 +63,13 @@ class SiteURLSearcher:
     def __init__(self, url_prefix: HttpUrl, home_url: HttpUrl) -> None:
         self._url_prefix = url_prefix
         self._home_url = home_url
-        response = requests.get(self._home_url)
+        try:
+            headers = {
+                'User-Agent': random.choice(USER_AGENTS)
+            }
+            response = requests.get(self._home_url, headers=headers)
+        except:
+            raise ValueError(f'Incorrect URL: {self._home_url}')
         if response.status_code == HTTPStatus.OK:
             self._home_soup = BeautifulSoup(response.text, PARSER)
         else:
@@ -103,12 +108,16 @@ class WebsitePageParser:
             parts = parsed_url.netloc.split('.')
             self._site_name = parts[0] if parts[0] != 'www' else parts[1]
         try:
-            response = requests.get(self._url)
-        except Exception:
-            pass
+            headers = {
+                'User-Agent': random.choice(USER_AGENTS)
+            }
+            response = requests.get(self._url, headers=headers)
+        except:
+            raise ValueError(f'Incorrect URL: {self._url}')
         if response.status_code == HTTPStatus.OK:
             self._soup = BeautifulSoup(response.text, WEBSITE_PARSER)
         else:
+            # print(f'\n\n{response.status_code}\n\n')
             raise ValueError(f"Invalid URL: {self._url}. Status code: {response.status_code}")
         self._social_regex = r'(' + '|'.join(SOCIAL_NETWORKS) + r')'
 
@@ -226,7 +235,7 @@ class FacebookParser:
     def __init__(self, facebook_url: HttpUrl) -> None:
         service = Service(DRIVER_PATH)
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         user_agent = random.choice(USER_AGENTS)
         options.add_argument(f'user-agent={user_agent}')
         self.browser = webdriver.Chrome(service=service,
