@@ -1,9 +1,14 @@
-from typing import Optional
+from typing import (
+    AnyStr,
+    List,
+)
 from pydantic import (
     BaseModel,
     HttpUrl,
     AnyUrl,
     constr,
+    EmailStr,
+    Field,
 )
 from ..choices import *
 
@@ -12,6 +17,7 @@ class SteponeForm(BaseModel):
     linkedIn: HttpUrl = 'https://example.com/'
     file: AnyUrl = 'https://example.com/'
     introduction: str = 'Test Intro Text'
+    job: str = 'Driver'
 
 
 class DefaultContactForm(BaseModel):
@@ -41,3 +47,15 @@ class RequestQuoteForm(BaseModel):
 
 class ReviewForm(BaseModel):
     rate: RateChoice
+
+
+class SubscribeForm(BaseModel):
+    news_interested: List[AnyStr]
+    email: EmailStr
+
+
+class BusinessForm(BaseModel):
+    type_of_equipment: int
+    number_of_trucks: int
+    time_in_business: int
+    percent: int = Field(..., ge=0, le=100)

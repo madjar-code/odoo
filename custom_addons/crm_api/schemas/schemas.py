@@ -16,6 +16,8 @@ from ...stepone.schemas.forms import (
     QuestionForm,
     RequestQuoteForm,
     ReviewForm,
+    SubscribeForm,
+    BusinessForm,
 )
 
 
@@ -49,3 +51,5 @@ LeadInstantFormSchema = create_lead_form_schema(InstantForm)
 LeadReviewFormSchema = create_lead_form_schema(ReviewForm)
 LeadRequestQuoteFormSchema = create_lead_form_schema(RequestQuoteForm)
 LeadDefaultContactFormSchema = create_lead_form_schema(DefaultContactForm)
+LeadSubscribeFormSchema = create_lead_form_schema(SubscribeForm)
+LeadBusinessFormSchema = create_lead_form_schema(BusinessForm)

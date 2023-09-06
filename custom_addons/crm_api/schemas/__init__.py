@@ -6,4 +6,6 @@ from .schemas import (
     LeadReviewFormSchema,
     LeadRequestQuoteFormSchema,
     LeadDefaultContactFormSchema,
+    LeadSubscribeFormSchema,
+    LeadBusinessFormSchema,
 )

@@ -22,6 +22,8 @@ from ..schemas import (
     LeadReviewFormSchema,
     LeadRequestQuoteFormSchema,
     LeadDefaultContactFormSchema,
+    LeadSubscribeFormSchema,
+    LeadBusinessFormSchema,
 )
 from ..repositories import (
     OdooLeadFormRepository,
@@ -42,8 +44,7 @@ async def create_lead_stepone(
         file: UploadFile = File(...),
     ):
     unique_dir_name = str(uuid.uuid4())
-    upload_dir = os.path.join(os.getcwd(), f'uploads/{unique_dir_name}')
-
+    upload_dir = os.path.join(os.getcwd(), f'uploads\{unique_dir_name}')
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
         
@@ -125,3 +126,22 @@ async def create_lead_default(
     ):
     lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'default form was created!'}
+
+
+
+@router.post(f'{API_PREFIX}/subscribe-form/')
+async def create_lead_subscribe(
+        lead_form: LeadSubscribeFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    lead_form_repo.create_validate_lead_form(lead_form, env)
+    return {'message': 'subscribe form was created!'}
+
+
+@router.post(f'{API_PREFIX}/business-form/')
+async def create_lead_subscribe(
+        lead_form: LeadBusinessFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    lead_form_repo.create_validate_lead_form(lead_form, env)
+    return {'message': 'business form was created!'}
