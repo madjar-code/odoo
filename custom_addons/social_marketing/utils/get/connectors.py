@@ -5,11 +5,11 @@ from abc import (
     abstractmethod,
 )
 from typing import List
-from ..custom_types import(
+from ...custom_types import(
     FieldName,
     PostsListType,
 )
-from ..custom_exceptions import (
+from ...custom_exceptions import (
     RequestException,
 )
 

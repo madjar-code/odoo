@@ -14,11 +14,11 @@ from ..custom_types import (
 from ..custom_exceptions import (
     RequestException,
 )
-from .connectors import (
+from .get.connectors import (
     ConnectorInterface,
     FacebookConnector,
 )
-from .preparers import (
+from .get.preparers import (
     PreparerInterface,
     FacebookPreparer,
 )

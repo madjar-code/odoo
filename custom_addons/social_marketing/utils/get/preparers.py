@@ -9,7 +9,7 @@ from typing import (
 from pydantic import (
     AnyUrl,
 )
-from ..custom_types import (
+from ...custom_types import (
     PostsListType,
     PostObject,
     PostState,
