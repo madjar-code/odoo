@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <record id="view_social_posts_form" model="ir.ui.view">
+            <field name="name">marketing.posts.form</field>
+            <field name="model">marketing.posts</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="social_id"/>
+                            <field name="message"/>
+                            <field name="schedule_time"/>
+                            <field name="state"/>
+                            <!-- <field name="images" widget="many2many_tags"/> -->
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="view_social_posts_tree" model="ir.ui.view">
+            <field name="name">marketing.posts.tree</field>
+            <field name="model">marketing.posts</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="social_id"/>
+                    <field name="message"/>
+                    <field name="schedule_time"/>
+                    <field name="state"/>
+                    <field name="likes_qty"/>
+                    <field name="reposts_qty"/>
+                    <field name="views_qty"/>
+                    <field name="comments_qty"/>
+                    <field name="changed"/>
+                    <header>
+                        <button name='from_db_to_accounts' string='Update Posts' type='object' class='oe_highlight'/>
+                    </header>
+                </tree>
+            </field>
+        </record>
+    </data>
+</odoo>
