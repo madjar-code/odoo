@@ -3,6 +3,7 @@ import uuid
 import shutil
 from typing import (
     Annotated,
+    Optional,
 )
 from fastapi import (
     APIRouter,
@@ -41,39 +42,43 @@ async def create_lead_stepone(
         env: Annotated[Environment, Depends(odoo_env)],
         lead: LeadSchema = Depends(),
         form: SteponeForm = Depends(),
-        file: UploadFile = File(...),
+        file: UploadFile = None,
     ):
-    unique_dir_name = str(uuid.uuid4())
-    upload_dir = os.path.join(os.getcwd(), f'uploads\{unique_dir_name}')
-    if not os.path.exists(upload_dir):
-        os.makedirs(upload_dir)
+    if file:
+        unique_dir_name = str(uuid.uuid4())
+        # upload_dir = os.path.join(os.)
+        upload_dir = os.path.abspath(os.path.join(os.path.expanduser(f'uploads/{unique_dir_name}')))
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+
+        dest = os.path.join(upload_dir, file.filename)
+
+        with open(dest, 'wb') as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        DIR_PREFIX = 'http://localhost:8069/uploads'
+        ALLOWED_FORMATS = (
+            '.doc',
+            '.docx',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.pdf',
+        )
+
+        _, file_format = os.path.splitext(file.filename)
         
-    dest = os.path.join(upload_dir, file.filename)
+        if file_format not in ALLOWED_FORMATS:
+            raise HTTPException(status_code=400, detail='Incorrect file format')
 
-    with open(dest, 'wb') as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        file_size = file.file.tell()
+        
+        TOP_SIZE = 20 * 1024 * 1024  # 20 MB
+        if file_size > TOP_SIZE:
+            raise HTTPException(status_code=400, detail='File is too big')
+    if not form.linkedIn and not file:
+        raise HTTPException(status_code=400, detail='No file and no linkedIn URL')
 
-    DIR_PREFIX = 'http://localhost:8069/uploads'
-    ALLOWED_FORMATS = (
-        '.doc',
-        '.docx',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        '.pdf',
-    )
-
-    _, file_format = os.path.splitext(file.filename)
-    
-    if file_format not in ALLOWED_FORMATS:
-        raise HTTPException(status_code=400, detail='Incorrect file format')
-
-    file_size = file.file.tell()
-    
-    TOP_SIZE = 20 * 1024 * 1024  # 20 MB
-    if file_size > TOP_SIZE:
-        raise HTTPException(status_code=400, detail='File is too big')
-
-    form.file = f'{DIR_PREFIX}/{unique_dir_name}/{file.filename}'
+    form.file = f'{DIR_PREFIX}/{unique_dir_name}/{file.filename}' if file else None
     lead_form_data = {
         'lead': lead.model_dump(),
         'form': form.model_dump(),

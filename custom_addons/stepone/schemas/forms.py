@@ -1,4 +1,5 @@
 from typing import (
+    Optional,
     AnyStr,
     List,
 )
@@ -14,8 +15,8 @@ from ..choices import *
 
 
 class SteponeForm(BaseModel):
-    linkedIn: HttpUrl = 'https://example.com/'
-    file: AnyUrl = 'https://example.com/'
+    linkedIn: Optional[HttpUrl] = None
+    file: Optional[AnyUrl] = None
     introduction: str = 'Test Intro Text'
     job: str = 'Driver'
 
@@ -58,4 +59,5 @@ class BusinessForm(BaseModel):
     type_of_equipment: int
     number_of_trucks: int
     time_in_business: int
+    message: str
     percent: int = Field(..., ge=0, le=100)
