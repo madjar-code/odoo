@@ -3,7 +3,7 @@ from typing import (
     Dict,
     Optional,
 )
-from ..custom_types import (
+from ...custom_types import (
     SocialMediaType,
     AccountObject,
     PostsListType,
@@ -11,14 +11,14 @@ from ..custom_types import (
     ErrorType,
     PostObject,
 )
-from ..custom_exceptions import (
+from ...custom_exceptions import (
     RequestException,
 )
-from .get.connectors import (
+from .connectors import (
     ConnectorInterface,
     FacebookConnector,
 )
-from .get.preparers import (
+from .preparers import (
     PreparerInterface,
     FacebookPreparer,
 )
@@ -44,16 +44,16 @@ class GetService:
         for account in account_objects:
             connector_class: Optional[ConnectorInterface] = MEDIA_CONNECTOR.get(account.social_media)
             self.connectors.append(connector_class(**account.credentials,
-                                                   account_id_name=account.id_name)
+                                                   account_id=account.id)
                                    ) if connector_class else None
 
     def get_all_posts_api(self) -> Dict[AccountType, PostsListType | ErrorType]:
         all_posts_api: Dict[AccountType, PostsListType] = dict()
         for connector in self.connectors:
             try:
-                all_posts_api[connector.account_id_name] = connector.get_all_posts()
+                all_posts_api[connector.account_id] = connector.get_all_posts()
             except RequestException:
-                all_posts_api[connector.account_id_name] = 'Problem with account connection'
+                all_posts_api[connector.account_id] = 'Problem with account connection'
         return all_posts_api
 
     def process_all_posts(self, all_posts_api: Dict[AccountType, PostsListType]
