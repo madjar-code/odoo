@@ -1,4 +1,5 @@
 from typing import (
+    Optional,
     Union,
     List,
     Dict,
@@ -14,10 +15,12 @@ from ..custom_types import (
     ErrorType,
     PostObject,
 )
-from ..utils.services import GetService
+from .get.service import GetService
+from .post.service import PostService
 
 
-update_fields = {
+
+UPDATE_FIELDS = {
     'message': 'message',
     'reposts_qty': 'reposts_qty',
     'likes_qty': 'likes_qty',
@@ -42,14 +45,14 @@ class DataSynchronizer:
         all_posts_api_filtered = self._filter_non_connected_accounts(all_posts_api)
 
         account_posts_objects = get_service.process_all_posts(all_posts_api_filtered)
-        for page_id_name in account_posts_objects.keys():
-            for post_object in account_posts_objects.get(page_id_name):
+        for page_id in account_posts_objects.keys():
+            for post_object in account_posts_objects.get(page_id):
                 if post_object.social_id not in existing_social_ids:
-                    self._create_non_existent_post(post_object)
+                    
+                    self._create_non_existent_post(post_object, page_id)
                 else:
                     self._update_existing_post(post_object)
                 new_social_ids.append((post_object.social_id))
-
             self._delete_non_existent_posts(existing_social_ids, new_social_ids)
 
     def _delete_non_existent_posts(self, existing_social_ids: List[IdType],
@@ -62,8 +65,11 @@ class DataSynchronizer:
                 if post_to_delete:
                     post_to_delete.unlink()
 
-    def _create_non_existent_post(self, post_object: PostObject) -> None:
-        self._post_table.create(post_object._asdict())
+    def _create_non_existent_post(self, post_object: PostObject,
+                                  account_id: IdType) -> None:
+        post_dict = post_object._asdict()
+        post_dict['account_id'] = account_id
+        self._post_table.create(post_dict)
 
     def _update_existing_post(self, post_object: PostObject) -> None:
         existing_post = self._post_table.search([
@@ -71,7 +77,7 @@ class DataSynchronizer:
         ])
         update_values: Dict[FieldName, Any] = {
             field_db: getattr(post_object, field_db)
-            for field_db, field_api in update_fields.items()
+            for field_db, field_api in UPDATE_FIELDS.items()
             if getattr(existing_post, field_db) != getattr(post_object, field_api)
         }
         if update_values:
@@ -95,6 +101,29 @@ class DataSynchronizer:
         non_existent_posts = self._post_table.search([
             ('social_id', '=', False)
         ])
+        
         for post in non_existent_posts:
-            print(post)
-        print(non_existent_posts)
+            post_object = PostObject(
+                None,
+                None,
+                None,
+                None,
+                None,
+                post.message,
+                post.state,
+                post.account_id,
+            )
+            for acc_obj in self.account_objects:
+                if acc_obj.id == post_object.account_id:
+                    break
+            post_service = PostService('Facebook', acc_obj, post_object=post_object)
+            post_errors = post_service.validate_prepare_post_data()
+            if not post_errors:
+                response_data = post_service.create_post_by_data()
+                social_id: Optional[IdType] = response_data.get('id')
+                post.write({
+                    'social_id': social_id,
+                }) if social_id else None
+
+            else:
+                return post_errors
