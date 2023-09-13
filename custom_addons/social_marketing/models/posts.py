@@ -42,9 +42,11 @@ class SocialPosts(models.Model):
     changed = fields.Boolean(
         string='Is Synced?', default=True, readonly=True)
 
-    account_id = fields.Many2one('marketing.accounts',
-                                 string='Related Account',
-                                 ondelete='cascade')
+    account_id = fields.Many2one(
+        'marketing.accounts',
+        string='Related Account',
+        ondelete='cascade',
+    )
     # images = fields.Many2many('ir.attachment', string='Images')
 
     def from_accounts_to_db(self) -> None:
@@ -56,7 +58,7 @@ class SocialPosts(models.Model):
                     'access_token': acc.fb_credentials_id.access_token,
                     'page_id': acc.fb_credentials_id.page_id,
                 }
-            acc_obj = AccountObject(acc.id_name, acc.social_media, credentials)
+            acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
             account_list.append(acc_obj)
         DataSynchronizer(['Facebook'], account_list,
                          self.env['marketing.posts']).from_accounts_to_db()
@@ -70,7 +72,7 @@ class SocialPosts(models.Model):
                     'access_token': acc.fb_credentials_id.access_token,
                     'page_id': acc.fb_credentials_id.page_id,
                 }
-            acc_obj = AccountObject(acc.id_name, acc.social_media, credentials)
+            acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
             account_list.append(acc_obj)
         DataSynchronizer(['Facebook'], account_list,
                          self.env['marketing.posts']).from_db_to_accounts()
