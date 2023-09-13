@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <record id="crm_lead_view_custom_form_2" model="ir.ui.view">
+    <record id="crm_lead_view_custom_form" model="ir.ui.view">
         <field name="name">crm.lead.view.form.inherit.lead.enrich</field>
         <field model="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_custom_form"/>
-        <!-- <field name="arch" type="xml">
+        <field name="arch" type="xml">
             <xpath expr="//button[@name='%(crm.action_crm_lead2opportunity_partner)d']" position="after">
                 <field name="show_enrich_button" invisible="1"/>
                 <button string="Enrich" name="enrich_data" type="object" class="btn btn-secondary" data-hotkey="g"
@@ -13,7 +13,7 @@
                 <button string="Enrich" name="enrich_data" type="object" class="btn btn-secondary" data-hotkey="g"
                 title="Enrich opportunity with company data"
                 attrs="{'invisible':['|',('show_enrich_button', '!=', True),('type','=','lead')]}"/>
-            </xpath> -->
-        <!-- </field> -->
+            </xpath>
+        </field>
     </record>
 </odoo>
