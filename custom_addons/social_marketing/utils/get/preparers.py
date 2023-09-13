@@ -53,6 +53,7 @@ class FacebookPreparer(PreparerInterface):
                 comments_qty=comments_qty,
                 message=message,
                 state=PostState.posted.value,
+                account_id=None,
                 # image_urls=image_urls,
             )
             all_posts.append(post_object)
