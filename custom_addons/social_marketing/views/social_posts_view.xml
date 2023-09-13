@@ -12,6 +12,7 @@
                             <field name="message"/>
                             <field name="schedule_time"/>
                             <field name="state"/>
+                            <field name="account_id"/>
                             <!-- <field name="images" widget="many2many_tags"/> -->
                         </group>
                     </sheet>
@@ -25,6 +26,7 @@
                 <tree>
                     <field name="social_id"/>
                     <field name="message"/>
+                    <field name="account_id"/>
                     <field name="schedule_time"/>
                     <field name="state"/>
                     <field name="likes_qty"/>
@@ -33,7 +35,8 @@
                     <field name="comments_qty"/>
                     <field name="changed"/>
                     <header>
-                        <button name='from_db_to_accounts' string='Update Posts' type='object' class='oe_highlight'/>
+                        <button name='from_accounts_to_db' string='FROM ACCOUNTS' type='object' class='oe_highlight'/>
+                        <button name='from_db_to_accounts' string='MAKE REQUESTS' type='object' class='oe_highlight'/>
                     </header>
                 </tree>
             </field>
