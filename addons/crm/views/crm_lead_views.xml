@@ -266,8 +266,7 @@
                             </field> -->
                             <field name="property_ids" widget="kanban">
                                 <tree>
-                                    <field name="prop_description_id">
-                                    </field>
+                                    <field name="prop_description_id"/>
                                     <field name="value"/>
                                 </tree>
                             </field>
