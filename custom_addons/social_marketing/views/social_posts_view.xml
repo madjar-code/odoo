@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <odoo>
     <data>
+    
         <record id="view_social_posts_form" model="ir.ui.view">
             <field name="name">marketing.posts.form</field>
             <field name="model">marketing.posts</field>
@@ -13,12 +14,19 @@
                             <field name="schedule_time"/>
                             <field name="state"/>
                             <field name="account_id"/>
-                            <!-- <field name="images" widget="many2many_tags"/> -->
+                            <field name="image_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="image"/>
+                                </tree>
+                            </field>
                         </group>
                     </sheet>
                 </form>
             </field>
         </record>
+
         <record id="view_social_posts_tree" model="ir.ui.view">
             <field name="name">marketing.posts.tree</field>
             <field name="model">marketing.posts</field>
@@ -33,7 +41,8 @@
                     <field name="reposts_qty"/>
                     <field name="views_qty"/>
                     <field name="comments_qty"/>
-                    <field name="changed"/>
+                    <!-- <field name="changed"/> -->
+                    <field name="image_ids"/>
                     <header>
                         <button name='from_accounts_to_db' string='FROM ACCOUNTS' type='object' class='oe_highlight'/>
                         <button name='from_db_to_accounts' string='MAKE REQUESTS' type='object' class='oe_highlight'/>
@@ -41,5 +50,7 @@
                 </tree>
             </field>
         </record>
+
+
     </data>
 </odoo>
