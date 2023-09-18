@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <record id="view_marketing_image_form" model="ir.ui.view">
+            <field name="name">marketing.image.form.edit</field>
+            <field name="model">marketing.image</field>
+            <field name="arch" type="xml">
+                <form string="Image">
+                    <!-- <header>
+                        <button string="Edit" type="action" name="action_edit" class="oe_highlight"/>
+                    </header> -->
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="image" widget="image" class="oe_avatar" options='{"preview_image": "image"}'/>
+                        <field name="post_id"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_images_form" model="ir.ui.view">
+            <field name="name">marketing.image.form</field>
+            <field name="model">marketing.image</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name='post_id'/>
+                            <field name="image"/>
+                            <field
+                                name="image"
+                                widget="image"
+                                class="oe_avatar"
+                                options='{"preview_image": "image"}'
+                            />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
