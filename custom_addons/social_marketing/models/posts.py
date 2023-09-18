@@ -47,7 +47,12 @@ class SocialPosts(models.Model):
         string='Related Account',
         ondelete='cascade',
     )
-    # images = fields.Many2many('ir.attachment', string='Images')
+    image_ids = fields.One2many(
+        'marketing.image',
+        'post_id',
+        string='Post Images',
+        required=False,
+    )
 
     def from_accounts_to_db(self) -> None:
         accounts = self.env['marketing.accounts'].search([])
@@ -61,7 +66,9 @@ class SocialPosts(models.Model):
             acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
             account_list.append(acc_obj)
         DataSynchronizer(['Facebook'], account_list,
-                         self.env['marketing.posts']).from_accounts_to_db()
+                         self.env['marketing.posts'],
+                         self.env['marketing.image']
+                         ).from_accounts_to_db()
 
     def from_db_to_accounts(self) -> None:
         accounts = self.env['marketing.accounts'].search([])
@@ -75,7 +82,9 @@ class SocialPosts(models.Model):
             acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
             account_list.append(acc_obj)
         DataSynchronizer(['Facebook'], account_list,
-                         self.env['marketing.posts']).from_db_to_accounts()
+                         self.env['marketing.posts'],
+                         self.env['marketing.image']
+                         ).from_db_to_accounts()
 
     def get_all_social_ids(self) -> List[IdType]:
         posts = self.env['marketing.posts'].search_read([], ['social_id'])
