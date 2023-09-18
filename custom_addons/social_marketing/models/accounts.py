@@ -15,8 +15,11 @@ class Accounts(models.Model):
     id_name = fields.Char('ID name for account identifying', required=False)
     full_name = fields.Char('This is full account name')
 
-    post_ids = fields.One2many('marketing.posts','account_id',
-                                string='Related Account Posts')
+    post_ids = fields.One2many(
+        'marketing.posts',
+        'account_id',
+        string='Related Account Posts'
+    )
     
     fb_credentials_id = fields.Many2one('marketing.fb.credentials',
                                         string='Related Credentials Data',
