@@ -1,3 +1,4 @@
+import json
 from abc import (
     ABC,
     abstractmethod,
@@ -52,15 +53,26 @@ class FacebookPreparer(PreparerInterface):
                 views_qty=None,
                 comments_qty=comments_qty,
                 message=message,
+                
                 state=PostState.posted.value,
                 account_id=None,
-                # image_urls=image_urls,
+                image_urls=image_urls,
             )
             all_posts.append(post_object)
         return all_posts
 
-    def process_attachments(self, attachments: Dict) -> List[AnyUrl]:
-        return [image['media']['image']['src'] for image in attachments]
+    def process_attachments(self, attachments: List[Dict]) -> List[AnyUrl]:
+        result_image_urls: List[AnyUrl] = []
+        # add recursion
+        for image in attachments:
+            subattachments_objects = image.get('subattachments')
+            if subattachments_objects:
+                subattachments = subattachments_objects['data']
+                for sub_image in subattachments:
+                    result_image_urls.append(sub_image['media']['image']['src'])
+                return result_image_urls
+            result_image_urls.append(image['media']['image']['src'])
+        return result_image_urls
 
     def process_likes(self, likes_object: Dict) -> int:
         return likes_object['summary']['total_count']
