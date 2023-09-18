@@ -6,6 +6,7 @@ from typing import (
     Dict,
     Optional,
 )
+from pydantic import AnyUrl
 
 AccountType: TypeAlias = str
 TimestampType: TypeAlias = str
@@ -14,6 +15,7 @@ IdType: TypeAlias = int
 ErrorType: TypeAlias = str
 PostsListType: TypeAlias = List[Dict]
 PostType: TypeAlias = Dict
+ImageType: TypeAlias = Dict
 CommentsListType: TypeAlias = List[Dict]
 CommentType: TypeAlias = Dict
 FieldErrorsType: TypeAlias = Dict[FieldName, List[str]]
@@ -44,6 +46,13 @@ class SocialMediaType(str, Enum):
     twitter = 'Twitter'
 
 
+class ImageObject(NamedTuple):
+    name: Optional[str]
+    format: str
+    description: Optional[str]
+    image: bytes
+
+
 class PostObject(NamedTuple):
     social_id: Optional[IdType]
     reposts_qty: Optional[int]
@@ -53,10 +62,8 @@ class PostObject(NamedTuple):
     message: Optional[str]
     state: Optional[PostState]
     account_id: Optional[IdType]
-    # account_id_name: Optional[IdType]
+    image_objects: List[ImageObject]
     # schedule_time: Optional[str]
-    # type: Optional[PostType]
-    # image_urls: List[AnyUrl]
 
 
 class AccountObject(NamedTuple):
