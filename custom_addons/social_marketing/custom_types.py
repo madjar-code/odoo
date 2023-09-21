@@ -6,7 +6,6 @@ from typing import (
     Dict,
     Optional,
 )
-from pydantic import AnyUrl
 
 AccountType: TypeAlias = str
 TimestampType: TypeAlias = str
@@ -19,10 +18,6 @@ ImageType: TypeAlias = Dict
 CommentsListType: TypeAlias = List[Dict]
 CommentType: TypeAlias = Dict
 FieldErrorsType: TypeAlias = Dict[FieldName, List[str]]
-
-# class PostType(str, Enum):
-#     common = 'common'
-#     single = 'single'
 
 
 class Message(NamedTuple):
