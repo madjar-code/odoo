@@ -1,4 +1,4 @@
-import json
+import requests
 from abc import (
     ABC,
     abstractmethod,
@@ -6,6 +6,7 @@ from abc import (
 from typing import (
     List,
     Dict,
+    Optional,
 )
 from pydantic import (
     AnyUrl,
@@ -14,6 +15,7 @@ from ...custom_types import (
     PostsListType,
     PostObject,
     PostState,
+    ImageObject,
 )
 
 
@@ -30,11 +32,12 @@ class FacebookPreparer(PreparerInterface):
         all_posts: List[PostObject] = []
         for post_data in posts_list_data:
             attachments_objects = post_data.get('attachments')
-            image_urls = []
+
+            image_objects: List[ImageObject] = []
             if attachments_objects:
                 attachments_data = attachments_objects['data']
-                image_urls: List[AnyUrl] =\
-                    self.process_attachments(attachments_data)
+                image_objects = self.process_attachments(attachments_data)
+
             message = post_data.get('message')
 
             shares_object = post_data.get('shares')
@@ -56,23 +59,60 @@ class FacebookPreparer(PreparerInterface):
                 
                 state=PostState.posted.value,
                 account_id=None,
-                image_urls=image_urls,
+                image_objects=image_objects,
             )
             all_posts.append(post_object)
         return all_posts
 
-    def process_attachments(self, attachments: List[Dict]) -> List[AnyUrl]:
-        result_image_urls: List[AnyUrl] = []
-        # add recursion
+    def _process_image(self, image_url: AnyUrl) -> ImageObject:
+        from PIL import Image
+        import io
+        import base64
+
+        image_data_bytes = self._get_image_bytes(image_url)
+        image_data = io.BytesIO(image_data_bytes)
+        image_data_base64 = base64.b64encode(image_data.read()).decode('utf-8')
+        image_data.seek(0)
+
+        image = Image.open(io.BytesIO(image_data_bytes))
+        image_format = image.format.lower()
+        image.close()
+
+        image_object = ImageObject(
+            format=image_format,
+            image=image_data_base64,
+            name=None,
+            description=None
+        )
+        return image_object
+
+    def process_attachments(self, attachments: List[Dict]) -> List[ImageObject]:
+        result_image_objects: List[ImageObject] = []
         for image in attachments:
             subattachments_objects = image.get('subattachments')
             if subattachments_objects:
                 subattachments = subattachments_objects['data']
                 for sub_image in subattachments:
-                    result_image_urls.append(sub_image['media']['image']['src'])
-                return result_image_urls
-            result_image_urls.append(image['media']['image']['src'])
-        return result_image_urls
+                    image_url: AnyUrl = sub_image['media']['image']['src']
+                    image_object = self._process_image(image_url)
+                    result_image_objects.append(image_object)
+                return result_image_objects
+
+            image_url: AnyUrl = image['media']['image']['src']
+            image_object = self._process_image(image_url)
+            result_image_objects.append(image_object)
+        return result_image_objects
+
+    def _get_image_bytes(self, url: AnyUrl) -> Optional[bytes]:
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                image_data = response.content
+                return image_data
+            else:
+                return None
+        except:
+            return None
 
     def process_likes(self, likes_object: Dict) -> int:
         return likes_object['summary']['total_count']
