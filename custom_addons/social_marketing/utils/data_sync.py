@@ -1,7 +1,10 @@
-import requests
+import io
+import base64
+from PIL import Image
 from typing import (
     Optional,
     Union,
+    Tuple,
     List,
     Dict,
     Any,
@@ -45,8 +48,8 @@ class DataSynchronizer:
 
         get_service = GetService(self.social_medias, self.account_objects)
         all_posts_api = get_service.get_all_posts_api()
-        all_posts_api_filtered = self._filter_non_connected_accounts(all_posts_api)
 
+        all_posts_api_filtered = self._filter_non_connected_accounts(all_posts_api)
         account_posts_objects = get_service.process_all_posts(all_posts_api_filtered)
         for page_id in account_posts_objects.keys():
             for post_object in account_posts_objects.get(page_id):
@@ -59,6 +62,8 @@ class DataSynchronizer:
 
     def _delete_non_existent_posts(self, existing_social_ids: List[IdType],
                                   new_social_ids: List[IdType]) -> None:
+        
+         
         for old_social_id in existing_social_ids:
             if old_social_id not in new_social_ids:
                 post_to_delete = self._post_table.search([
@@ -70,18 +75,17 @@ class DataSynchronizer:
     def _create_non_existent_post(self, post_object: PostObject,
                                   account_id: IdType) -> None:
         post_dict = post_object._asdict()
-        del post_dict['image_urls']
+        del post_dict['image_objects']
         post_dict['account_id'] = account_id
         new_post = self._post_table.create(post_dict)
-        for image_url in post_object.image_urls:
+        for image_object in post_object.image_objects:
             try:
-                response = requests.get(image_url)
-                response.raise_for_status()
                 image_data = {
-                    'name': image_url,
-                    'description': '',
-                    'image': response.content,
-                    'post_id': new_post.id
+                    'name': image_object.name,
+                    'description': image_object.description,
+                    # 'format': image_object.format,
+                    'image': image_object.image,
+                    'post_id': new_post.id,
                 }
                 self._image_table.create(image_data)
             except Exception as e:
@@ -114,35 +118,6 @@ class DataSynchronizer:
         return social_ids
 
     def from_db_to_accounts(self) -> None:
-        import io
-        import requests
-        import base64
-        from PIL import Image
-
-        # image_record = self._image_table.search([], limit=1)
-        # image_data = io.BytesIO(base64.b64decode(image_record.image))
-        # image_data.seek(0)
-
-        # image_format = Image.open(image_data).format.lower()
-        # image = Image.open(image_data)
-        # image_bytes_io = io.BytesIO()
-        # image.save(image_bytes_io, image_format)
-        # image_bytes_io.seek(0)
-        # image.close()
-
-        # response = requests.post(
-        #     f'https://graph.facebook.com/v17.0/{page_id}/photos/',
-        #     params={
-        #         'access_token': access_token
-        #     },
-        #     files={
-        #         'source': (f'personal_image1.{image_format}', image_bytes_io.read(), f'image/{image_format}'),
-        #         # 'source2': (f'personal_image2.{image_format}', image_bytes_io.read(), f'image/{image_format}'),
-        #     }
-        # )
-
-        # print(f'\n\n{response.text}\n\n')
-
         non_existent_posts = self._post_table.search([
             ('social_id', '=', False)
         ])
@@ -154,17 +129,8 @@ class DataSynchronizer:
             image_objects: List[ImageObject] = []
 
             for related_image in related_images:
-                image_data = io.BytesIO(base64.b64decode(related_image.image))
-                image_data.seek(0)
-
-                image_format = Image.open(image_data).format.lower()
-                image = Image.open(image_data)
-                image_bytes_io = io.BytesIO()
-                image.save(image_bytes_io, image_format)
-                image_bytes_io.seek(0)
-                image.close()
-
-                print(f'\n\n{image_format}\n\n')
+                image_format, image_bytes_io = self._process_image_data(
+                    base64.b64decode(related_image.image))
                 image_object = ImageObject(
                     name=f'image.{image_format}',
                     description=None,
@@ -191,9 +157,23 @@ class DataSynchronizer:
             post_errors = post_service.validate_prepare_post_data()
             if not post_errors:
                 response_data = post_service.create_post_by_data()
-                # social_id: Optional[IdType] = response_data.get('id')
-                # post.write({
-                #     'social_id': social_id,
-                # }) if social_id else None
+                social_id: Optional[IdType] = response_data.get('id')
+                post.write({
+                    'social_id': social_id,
+                }) if social_id else None
             else:
                 return post_errors
+
+    def _process_image_data(self, image_data_bytes: bytes) -> Tuple[str, bytes]:
+        image_data = io.BytesIO(image_data_bytes)
+        image_format = Image.open(image_data).format.lower()
+
+        image_data.seek(0)
+
+        image = Image.open(image_data)
+        image_bytes_io = io.BytesIO()
+        image.save(image_bytes_io, image_format)
+        image_bytes_io.seek(0)
+        image.close()
+
+        return image_format, image_bytes_io.read()
