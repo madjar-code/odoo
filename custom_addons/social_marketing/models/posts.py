@@ -1,6 +1,7 @@
 from odoo import (
     models,
     fields,
+    api,
 )
 from typing import (
     List,
@@ -14,6 +15,29 @@ from ..custom_types import (
     PostState,
     AccountObject,
 )
+
+
+class PostsWrapper(models.Model):
+    _name = 'marketing.posts.wrapper'
+
+    post_ids = fields.One2many(
+        'marketing.posts',
+        'wrapper_id',
+        string='Wrapper Posts',
+        required=False,
+    )
+    total_likes = fields.Integer(
+        string='Total Likes',
+        compute='_compute_total_likes',
+        store=True,
+        readonly=True,
+    )
+    
+    @api.depends('post_ids.likes_qty')
+    def _compute_total_likes(self) -> int:
+        for wrapper in self:
+            total_likes = sum(wrapper.post_ids.mapped('likes_qty'))
+            wrapper.total_likes = total_likes
 
 
 class SocialPosts(models.Model):
@@ -46,6 +70,12 @@ class SocialPosts(models.Model):
         'marketing.accounts',
         string='Related Account',
         ondelete='cascade',
+    )
+    wrapper_id = fields.Many2one(
+        'marketing.posts.wrapper',
+        string='Related Posts Wrapper',
+        on_delete='set null',
+        required=False,
     )
     image_ids = fields.One2many(
         'marketing.image',
