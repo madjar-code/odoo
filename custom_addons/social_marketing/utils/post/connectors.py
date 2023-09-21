@@ -4,10 +4,6 @@ from abc import (
     ABC,
     abstractmethod,
 )
-from typing import (
-    Optional,
-    List,
-)
 from ...custom_types import (
     ImageType,
     ImageObject,
@@ -99,37 +95,6 @@ class FacebookConnector(ConnectorInterface):
             raise RequestException(response_data['error']['message'])
         return response_data
 
-    def create_post_with_multiple_images(
-            self, post_data: PostType,
-            image_data_list: List[ImageType]) -> PostType:
-        import facebook
-
-        graph = facebook.GraphAPI(self._access_token)
-        uploaded_photos = []
-        for image_data in image_data_list:
-            photo = graph.put_photo(image=image_data[1], content_type=image_data[0])
-            uploaded_photos.append(photo['id'])
-        post_data = {
-            'message': post_data['message'],
-            'attached_media': ','.join(uploaded_photos),
-        }
-        graph.put_object(self._page_id, connection_name='feed', **post_data)
-        # url = f'{self.API_PREFIX}/{self._page_id}/photos/'
-        # params = post_data
-        # params['access_token'] = self._access_token
-
-        # files = {}
-        # for i, image_data in enumerate(image_data_list):
-        #     files[f'source[{i}]'] = image_data
-        # print(f'\n\n{files}\n\n')
-        # response = requests.post(url=url, params=params, files=files)
-        # response_data = json.loads(response.text)
-        # print(f'\n\n{response.text}\n\n')
-        # if response_data.get('error'):
-        #     raise RequestException(response_data['error']['message'])
-        # return response_data
-
-
 
     def create_comment_on_post(
             self, post_id: IdType, comment_data: CommentType) -> CommentType:
@@ -160,21 +125,21 @@ class FacebookConnector(ConnectorInterface):
                     )
                 },
             )
-        elif image_objects:
-            image_data_list = []
-            for image_object in image_objects:
-                image_data = (
-                    f'{image_object.name}',
-                    image_object.image,
-                    f'image/{image_object.format}',   
-                )
-                image_data_list.append(image_data)
-            response_data = self.create_post_with_multiple_images(
-                {
-                    'message': post_data.message,
-                },
-                image_data_list,
-            )
+        # elif image_objects:
+        #     image_data_list = []
+        #     for image_object in image_objects:
+        #         image_data = (
+        #             f'{image_object.name}',
+        #             image_object.image,
+        #             f'image/{image_object.format}',   
+        #         )
+        #         image_data_list.append(image_data)
+        #     response_data = self.create_post_with_multiple_images(
+        #         {
+        #             'message': post_data.message,
+        #         },
+        #         image_data_list,
+        #     )
 
         # elif post_data.schedule_time:
         #     response_data = self.create_post(
