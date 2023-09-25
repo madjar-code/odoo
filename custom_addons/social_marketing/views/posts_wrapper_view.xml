@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <record id="view_posts_wrapper_form" model="ir.ui.view">
+            <field name="name">marketing.posts.wrapper.form</field>
+            <field name="model">marketing.posts.wrapper</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="total_likes"/>
+                            <field name="post_ids"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_posts_wrapper_tree" model="ir.ui.view">
+            <field name="name">marketing.posts.wrapper.tree</field>
+            <field name="model">marketing.posts.wrapper</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="total_likes"/>
+                    <field name="post_ids"/>
+                </tree>
+            </field>
+        </record>
+    </data>
+</odoo>

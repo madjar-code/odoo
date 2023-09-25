@@ -7,6 +7,7 @@
         'security/ir.model.access.csv',
         'views/social_posts_view.xml',
         'views/media_view.xml',
+        'views/posts_wrapper_view.xml',
     ),
     'installable': True,
     'application': True,
