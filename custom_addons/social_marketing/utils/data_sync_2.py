@@ -166,53 +166,57 @@ class DataSynchronizer2:
                 if post_to_delete:
                     post_to_delete.unlink()
 
-    def create_new_posts_from_db(self) -> None:
+    def from_db_to_accounts(self) -> None:
+        self.create_new_posts_from_db()
+        self.delete_old_posts_from_db()
+
+    def create_new_posts_from_db(self):
         non_existent_posts = self._post_table.search([
             ('social_id', '=', False)
         ])
 
         for post in non_existent_posts:
-            related_images = self._image_table.search([
-                ('post_id', '=', post.id)
-            ])
-            image_objects: List[ImageObject] = []
+            self.create_one_post_from_db(post)
 
-            for related_image in related_images:
-                if related_image.image:
-                    image_format, image_bytes_io = self._process_image_data(
-                        base64.b64decode(related_image.image)
-                    )
-                    image_object = ImageObject(
-                        name=f'image.{image_format}',
-                        description=None,
-                        format=image_format,
-                        image=image_bytes_io,
-                    )
-                    image_objects.append(image_object)
-            post_object = PostObject(
-                None,
-                None,
-                None,
-                None,
-                None,
-                post.message,
-                post.state,
-                post.account_id,
-                image_objects,
-            )
-            for acc_obj in self.account_objects:
-                if int(acc_obj.id) == int(post_object.account_id):
-                    break
-            post_service = PostService('Facebook', acc_obj, post_object)
-            post_errors = post_service.validate_prepare_post_data()
-            if not post_errors:
-                response_data = post_service.create_post_by_data()
-                social_id: Optional[IdType] = response_data.get('id')
-                post.write({
-                    'social_id': social_id,
-                }) if social_id else None
-            else:
-                return post_errors
+    def create_one_post_from_db(self, post_db_object) ->\
+            Optional[Dict[FieldName, List[ErrorType]]]:
+        related_images = self._image_table.search([
+            ('post_id', '=', post_db_object.id)
+        ])
+        image_objects: List[ImageObject] = []
+
+        for related_image in related_images:
+            if related_image.image:
+                image_format, image_bytes_io = self._process_image_data(
+                    base64.b64decode(related_image.image)
+                )
+                image_object = ImageObject(
+                    name=f'image.{image_format}',
+                    description=None,
+                    format=image_format,
+                    image=image_bytes_io,
+                )
+                image_objects.append(image_object)
+        post_object = PostObject(
+            None, None, None, None, None,
+            post_db_object.message,
+            post_db_object.state,
+            post_db_object.account_id,
+            image_objects,
+        )
+        for acc_obj in self.account_objects:
+            if int(acc_obj.id) == int(post_object.account_id):
+                break
+        post_service = PostService('Facebook', acc_obj, post_object)
+        post_errors = post_service.validate_prepare_post_data()
+        if not post_errors:
+            response_data = post_service.create_post_by_data()
+            social_id: Optional[IdType] = response_data.get('id')
+            post_db_object.write({
+                'social_id': social_id,
+            }) if social_id else None
+        else:
+            return post_errors
 
     def delete_old_posts_from_db(self) -> None:
         db_posts_ids: Dict[AccountType, List[IdType]] = self._get_accounts_and_related_posts()
