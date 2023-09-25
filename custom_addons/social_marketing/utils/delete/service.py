@@ -31,9 +31,6 @@ MEDIA_CONNECTOR = {'Facebook': FacebookConnector,}
 CONNECTOR_MEDIA = {FacebookConnector: 'Facebook',}
 
 
-# Refactoring: separate responsibilities DeleteService -> Like PostService, and
-# remove some code to GetService 
-
 class DeleteService:
     def __init__(self, social_medias: List[SocialMediaType] = None,
                  account_objects: List[AccountObject] = None) -> None:
