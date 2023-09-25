@@ -7,8 +7,11 @@ from typing import (
     List,
     Dict,
 )
-from ..utils.data_sync import (
-    DataSynchronizer
+# from ..utils.data_sync import (
+#     DataSynchronizer,
+# )
+from ..utils.data_sync_2 import (
+    DataSynchronizer2,
 )
 from ..custom_types import (
     IdType,
@@ -23,7 +26,7 @@ class PostsWrapper(models.Model):
     post_ids = fields.One2many(
         'marketing.posts',
         'wrapper_id',
-        string='Wrapper Posts',
+        string='Wrapped Posts',
         required=False,
     )
     total_likes = fields.Integer(
@@ -35,9 +38,14 @@ class PostsWrapper(models.Model):
     
     @api.depends('post_ids.likes_qty')
     def _compute_total_likes(self) -> int:
+        print(f'\n\SMTH Happends\n\n')
         for wrapper in self:
             total_likes = sum(wrapper.post_ids.mapped('likes_qty'))
             wrapper.total_likes = total_likes
+
+    @api.onchange('post_ids')
+    def _onchange_post_ids(self) -> None:
+        self._compute_total_likes()
 
 
 class SocialPosts(models.Model):
@@ -74,7 +82,7 @@ class SocialPosts(models.Model):
     wrapper_id = fields.Many2one(
         'marketing.posts.wrapper',
         string='Related Posts Wrapper',
-        on_delete='set null',
+        ondelete='set null',
         required=False,
     )
     image_ids = fields.One2many(
@@ -84,7 +92,7 @@ class SocialPosts(models.Model):
         required=False,
     )
 
-    def from_accounts_to_db(self) -> None:
+    def _get_all_account_objects(self) -> None:
         accounts = self.env['marketing.accounts'].search([])
         account_list: List[AccountObject] = []
         for acc in accounts:
@@ -95,28 +103,25 @@ class SocialPosts(models.Model):
                 }
             acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
             account_list.append(acc_obj)
-        DataSynchronizer(['Facebook'], account_list,
+        return account_list
+
+    def from_accounts_to_db(self) -> None:
+        account_list = self._get_all_account_objects()
+        DataSynchronizer2(['Facebook'], account_list,
                          self.env['marketing.posts'],
-                         self.env['marketing.image']
+                         self.env['marketing.image'],
+                         self.env['marketing.accounts'],
                          ).from_accounts_to_db()
 
     def from_db_to_accounts(self) -> None:
-        accounts = self.env['marketing.accounts'].search([])
-        account_list: List[AccountObject] = []
-        for acc in accounts:
-            if acc.social_media == 'Facebook':
-                credentials: Dict[str, str] = {
-                    'access_token': acc.fb_credentials_id.access_token,
-                    'page_id': acc.fb_credentials_id.page_id,
-                }
-            acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
-            account_list.append(acc_obj)
-        DataSynchronizer(['Facebook'], account_list,
+        account_list = self._get_all_account_objects()
+        DataSynchronizer2(['Facebook'], account_list,
                          self.env['marketing.posts'],
-                         self.env['marketing.image']
-                         ).from_db_to_accounts()
+                         self.env['marketing.image'],
+                         self.env['marketing.accounts'],
+                         ).create_new_posts_from_db()
 
-    def get_all_social_ids(self) -> List[IdType]:
-        posts = self.env['marketing.posts'].search_read([], ['social_id'])
-        social_ids = [post['social_id'] for post in posts]
-        return social_ids
+    # def get_all_social_ids(self) -> List[IdType]:
+    #     posts = self.env['marketing.posts'].search_read([], ['social_id'])
+    #     social_ids = [post['social_id'] for post in posts]
+    #     return social_ids
