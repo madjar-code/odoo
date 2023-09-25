@@ -1,4 +1,7 @@
 import requests
+import io
+import base64
+from PIL import Image
 from abc import (
     ABC,
     abstractmethod,
@@ -15,11 +18,17 @@ from ...custom_types import (
     PostsListType,
     PostObject,
     PostState,
+    IdType,
     ImageObject,
 )
 
 
 class PreparerInterface(ABC):
+    @abstractmethod
+    def transform_to_list_ids(
+            self, posts_list_data: PostsListType) -> List[IdType]:
+        pass
+
     @abstractmethod
     def process_all_posts_response(
             self, posts_list_data: PostsListType) -> List[PostObject]:
@@ -27,6 +36,14 @@ class PreparerInterface(ABC):
 
 
 class FacebookPreparer(PreparerInterface):
+    def transform_to_list_ids(
+            self, posts_list_data: PostsListType) -> List[IdType]:
+        all_posts_ids: List[IdType] = []
+
+        for post_data in posts_list_data:
+            all_posts_ids.append(post_data.get('id'))
+        return all_posts_ids
+
     def process_all_posts_response(
             self, posts_list_data: PostsListType) -> List[PostObject]:
         all_posts: List[PostObject] = []
@@ -65,10 +82,6 @@ class FacebookPreparer(PreparerInterface):
         return all_posts
 
     def _process_image(self, image_url: AnyUrl) -> ImageObject:
-        from PIL import Image
-        import io
-        import base64
-
         image_data_bytes = self._get_image_bytes(image_url)
         image_data = io.BytesIO(image_data_bytes)
         image_data_base64 = base64.b64encode(image_data.read()).decode('utf-8')
