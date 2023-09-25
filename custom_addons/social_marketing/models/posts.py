@@ -7,9 +7,6 @@ from typing import (
     List,
     Dict,
 )
-# from ..utils.data_sync import (
-#     DataSynchronizer,
-# )
 from ..utils.data_sync_2 import (
     DataSynchronizer2,
 )
@@ -119,7 +116,7 @@ class SocialPosts(models.Model):
                          self.env['marketing.posts'],
                          self.env['marketing.image'],
                          self.env['marketing.accounts'],
-                         ).create_new_posts_from_db()
+                         ).from_db_to_accounts()
 
     # def get_all_social_ids(self) -> List[IdType]:
     #     posts = self.env['marketing.posts'].search_read([], ['social_id'])
