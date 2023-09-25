@@ -70,18 +70,16 @@ class FacebookConnector(ConnectorInterface):
             raise RequestException(response_data['error']['message'])
         return response_data
 
-
-
-    def create_image_on_post(self, post_id: IdType,
-                             image_data: ImageType) -> ImageType:
-        url = f'{self.API_PREFIX}/{post_id}/photos/'
-        params = image_data
-        params['access_token'] = self._access_token
-        response = requests.post(url=url, params=params, files=image_data)
-        response_data = json.loads(response.text)
-        if response_data.get('error'):
-            raise RequestException(response_data['error']['message'])
-        return response_data
+    # def create_image_on_post(self, post_id: IdType,
+    #                          image_data: ImageType) -> ImageType:
+    #     url = f'{self.API_PREFIX}/{post_id}/photos/'
+    #     params = image_data
+    #     params['access_token'] = self._access_token
+    #     response = requests.post(url=url, params=params, files=image_data)
+    #     response_data = json.loads(response.text)
+    #     if response_data.get('error'):
+    #         raise RequestException(response_data['error']['message'])
+    #     return response_data
 
     def update_post_state(self, post_id: IdType) -> PostType:
         url = f'{self.API_PREFIX}/{post_id}/'
@@ -94,7 +92,6 @@ class FacebookConnector(ConnectorInterface):
         if response_data.get('error'):
             raise RequestException(response_data['error']['message'])
         return response_data
-
 
     def create_comment_on_post(
             self, post_id: IdType, comment_data: CommentType) -> CommentType:
@@ -115,7 +112,7 @@ class FacebookConnector(ConnectorInterface):
             image_object: ImageObject = image_objects[0]
             response_data = self.create_post_with_one_image(
                 {
-                    'message': post_data.message,
+                    'message': post_data.message if post_data.message else '',
                 },
                 {
                     'source': (
@@ -153,7 +150,7 @@ class FacebookConnector(ConnectorInterface):
         elif post_data:
             response_data = self.create_post(
                 {
-                    'message': post_data.message,
+                    'message': str(post_data.message),
                 }
             )
         return response_data
