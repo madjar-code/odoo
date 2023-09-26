@@ -218,13 +218,20 @@ class DataSynchronizer2:
         else:
             return post_errors
 
+    # TODO: create massive deletion like massive creation
     def delete_old_posts_from_db(self) -> None:
         db_posts_ids: Dict[AccountType, List[IdType]] = self._get_accounts_and_related_posts()
+        get_service = GetService(self.social_medias, self.account_objects)
+        all_posts_ids_api = get_service.get_all_posts_ids_api()
+        all_posts_ids_api_filtered = self._filter_non_connected_accounts(all_posts_ids_api)
+        accounts_posts_ids = get_service.process_all_posts_ids(all_posts_ids_api_filtered)
+
         delete_service = DeleteService(self.social_medias, self.account_objects)
-        all_posts_api = delete_service.get_all_posts_api()
-        all_posts_api_filtered = self._filter_non_connected_accounts(all_posts_api)
-        accounts_posts_ids = delete_service.process_all_posts(all_posts_api_filtered)
         delete_service.delete_several_posts(db_posts_ids, accounts_posts_ids)
+
+    def delete_one_post_from_db(self, post_id: IdType) -> None:
+        delete_service = DeleteService(self.social_medias, self.account_objects)
+        delete_service.delete_one_post(post_id)
 
     def _get_accounts_and_related_posts(self) -> Dict[AccountType, List[IdType]]:
         accounts_with_posts: Dict[AccountType, List[IdType]] = dict()
