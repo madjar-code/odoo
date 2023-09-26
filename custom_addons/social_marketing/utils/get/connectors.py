@@ -20,6 +20,10 @@ class ConnectorInterface(ABC):
     def get_all_posts(self, fields: List[FieldName]) -> PostsListType:
         pass
 
+    @abstractmethod
+    def get_all_posts_ids(self, fields: List[FieldName]) -> PostsListType:
+        pass
+
 
 GPAPH_API_VERSION = 'v17.0'
 
@@ -30,6 +34,10 @@ class FacebookConnector(ConnectorInterface):
         self._page_id = page_id
         self._access_token = access_token
         self.account_id = account_id
+
+    def get_all_posts_ids(self, fields: 
+            List[FieldName] = ['id',]) -> PostsListType:
+        return self.get_all_posts(fields)
 
     def get_all_posts(self, fields: List[FieldName] =\
             ['created_time', 'attachments', 'message', 'id',
@@ -45,4 +53,3 @@ class FacebookConnector(ConnectorInterface):
         if response_data.get('error'):
             raise RequestException(response_data['error']['message'])
         return response_data['data']
-
