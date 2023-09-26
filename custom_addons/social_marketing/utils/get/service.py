@@ -9,6 +9,7 @@ from ...custom_types import (
     PostsListType,
     AccountType,
     ErrorType,
+    IdType,
     PostObject,
 )
 from ...custom_exceptions import (
@@ -56,6 +57,15 @@ class GetService:
                 all_posts_api[connector.account_id] = 'Problem with account connection'
         return all_posts_api
 
+    def get_all_posts_ids_api(self) -> Dict[AccountType, PostsListType | ErrorType]:
+        all_posts_api: Dict[AccountType, PostsListType] = dict()
+        for connector in self.connectors:
+            try:
+                all_posts_api[connector.account_id] = connector.get_all_posts_ids()
+            except RequestException:
+                all_posts_api[connector.account_id] = 'Problem with account connection'
+        return all_posts_api
+
     def process_all_posts(self, all_posts_api: Dict[AccountType, PostsListType]
                           ) -> Dict[AccountType, List[PostObject]]:
         # PostListType --> List[PostObject]
@@ -64,3 +74,11 @@ class GetService:
             for account, posts in all_posts_api.items():
                 all_posts[account] = preparer.process_all_posts_response(posts)
         return all_posts
+    
+    def process_all_posts_ids(self, all_posts_api: Dict[AccountType, PostsListType]
+                          ) -> Dict[AccountType, List[IdType]]:
+        all_posts_ids: Dict[AccountType, List[IdType]] = dict()
+        for preparer in self.preparers:
+            for account, posts in all_posts_api.items():
+                all_posts_ids[account] = preparer.transform_to_list_ids(posts)
+        return all_posts_ids
