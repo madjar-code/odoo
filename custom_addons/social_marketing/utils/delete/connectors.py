@@ -18,10 +18,6 @@ from ...custom_exceptions import (
 
 class ConnectorInterface(ABC):
     @abstractmethod
-    def get_all_posts_ids(self, fields: List[FieldName]) -> PostsListType:
-        pass
-
-    @abstractmethod
     def delete_post(self, post_id: IdType) -> PostType:
         pass
 
@@ -35,19 +31,6 @@ class FacebookConnector(ConnectorInterface):
         self._page_id = page_id
         self._access_token = access_token
         self.account_id = account_id
-
-    def get_all_posts_ids(self, fields: 
-            List[FieldName] = ['id',]) -> PostsListType:
-        url = f'{self.API_PREFIX}/{self._page_id}/feed'
-        params = {
-            'access_token': self._access_token,
-            'fields': ','.join(fields),
-        }
-        response = requests.get(url=url, params=params)
-        response_data = json.loads(response.text)
-        if response_data.get('error'):
-            raise RequestException(response_data['error']['message'])
-        return response_data['data']
 
     def delete_post(self, post_id: IdType) -> PostType:
         url = f'{self.API_PREFIX}/{post_id}'
