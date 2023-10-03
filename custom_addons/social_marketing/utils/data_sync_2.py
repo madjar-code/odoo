@@ -9,6 +9,7 @@ from typing import (
     Dict,
     Any,
 )
+from odoo.models import fields
 from ..custom_types import (
     IdType,
     AccountType,
@@ -19,6 +20,7 @@ from ..custom_types import (
     ErrorType,
     PostObject,
     ImageObject,
+    PostState,
 )
 from .get.service import GetService
 from .post.service import PostService
@@ -103,7 +105,7 @@ class DataSynchronizer2:
             if not isinstance(values, str):
                 all_posts_api_filtered[key] = values
             else:
-                raise Exception(f'\n\nПроблема с подключением\n\n')
+                raise Exception(f'\nAccount Connection Problem\n')
         return all_posts_api_filtered
 
     def _create_non_existent_post(self, post_object: PostObject,
@@ -200,9 +202,9 @@ class DataSynchronizer2:
         post_object = PostObject(
             None, None, None, None, None,
             post_db_object.message,
-            post_db_object.state,
+            PostState.posting.value,
             post_db_object.account_id,
-            image_objects,
+            image_objects, None
         )
         for acc_obj in self.account_objects:
             if int(acc_obj.id) == int(post_object.account_id):
@@ -210,12 +212,20 @@ class DataSynchronizer2:
         post_service = PostService('Facebook', acc_obj, post_object)
         post_errors = post_service.validate_prepare_post_data()
         if not post_errors:
+            post_db_object.write({
+                'state': PostState.posting.value
+            })
             response_data = post_service.create_post_by_data()
             social_id: Optional[IdType] = response_data.get('id')
             post_db_object.write({
                 'social_id': social_id,
+                'state': PostState.posted.value,
+                'posted_time': fields.Datetime.now(),
             }) if social_id else None
         else:
+            post_db_object.write({
+                'state': PostState.failed.value,
+            })
             return post_errors
 
     # TODO: create massive deletion like massive creation
