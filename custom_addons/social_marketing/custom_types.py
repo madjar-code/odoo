@@ -31,6 +31,7 @@ class PostState(str, Enum):
     scheduled = 'scheduled'
     posting = 'posting'
     posted = 'posted'
+    failed = 'failed'
 
 
 class SocialMediaType(str, Enum):
@@ -58,6 +59,7 @@ class PostObject(NamedTuple):
     state: Optional[PostState]
     account_id: Optional[IdType]
     image_objects: List[ImageObject]
+    posted_time: Optional[str]
     # schedule_time: Optional[str]
 
 
