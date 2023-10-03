@@ -157,6 +157,14 @@ class FacebookPreparer(PreparerInterface):
         if post_data.message:
             self._update_errors(self.check_text(post_data.message))
             self._update_errors(self.check_links(post_data.message))
+        if not post_data.message and not post_data.image_objects:
+            self._update_errors(
+                Message(
+                    success=False,
+                    field_name='common_data',
+                    text='No images and no message'
+                )
+            )
         # if post_data.schedule_time:
         #     unix_timestamp: int = self.transform_time(post_data.schedule_time)
         #     self._update_errors(self.check_schedule_time(unix_timestamp))
