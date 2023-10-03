@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<odoo>
+    <menuitem
+        id="social_marketing_menu"
+        name="Social Marketing"
+        sequence="10"
+        web_icon="True"
+    />
+
+    <record
+        id="action_social_marketing"
+        model="ir.actions.act_window"
+    >
+        <field name="name">Social Posts</field>
+        <field name="res_model">marketing.posts</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record
+        id="action_schedule_posts"
+        model="ir.actions.act_window"
+    >
+        <field name="name">Schedule Posts</field>
+        <field name="res_model">marketing.posts</field>
+        <field name="view_mode">calendar</field>
+    </record>
+
+    <record
+        id="action_posts_wrapper"
+        model="ir.actions.act_window"
+    >
+        <field name="name">Common Posts</field>
+        <field name="res_model">marketing.posts.wrapper</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record
+        id="action_posts_accounts"
+        model="ir.actions.act_window"
+    >
+        <field name="name">Social Accounts</field>
+        <field name="res_model">marketing.accounts</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="marketing_posts_menu"
+        name="Social Posts"
+        parent="social_marketing_menu"
+        action="action_social_marketing"/>
+
+    <menuitem
+        id="marketing_schedule_posts_menu"
+        name="Schedule Posts"
+        parent="social_marketing_menu"
+        action="action_schedule_posts"/>
+    
+    <menuitem
+        id="marketing_posts_wrapper_menu"
+        name="Common Posts"
+        parent="social_marketing_menu"
+        action="action_posts_wrapper"/>
+
+    <menuitem
+        id="marketing_posts_accounts_menu"
+        name="Social Accounts"
+        parent="social_marketing_menu"
+        action="action_posts_accounts"/>    
+</odoo>
