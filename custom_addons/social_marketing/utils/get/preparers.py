@@ -1,6 +1,8 @@
 import requests
+import pytz
 import io
 import base64
+from datetime import datetime
 from PIL import Image
 from abc import (
     ABC,
@@ -50,6 +52,13 @@ class FacebookPreparer(PreparerInterface):
         for post_data in posts_list_data:
             attachments_objects = post_data.get('attachments')
 
+            posted_time_str = post_data.get('created_time')
+            if posted_time_str:
+                posted_time = datetime.strptime(posted_time_str, '%Y-%m-%dT%H:%M:%S%z')
+                posted_time_naive = posted_time.replace(tzinfo=None)
+            else:
+                posted_time_naive = None
+
             image_objects: List[ImageObject] = []
             if attachments_objects:
                 attachments_data = attachments_objects['data']
@@ -60,6 +69,8 @@ class FacebookPreparer(PreparerInterface):
             shares_object = post_data.get('shares')
             likes_object = post_data.get('likes')
             comments_object = post_data.get('comments')
+            
+            posted_time = post_data.get('created_time')
 
             reposts_qty = self.process_shares(shares_object) if shares_object else None
             likes_qty = self.process_likes(likes_object) if likes_object else None
@@ -77,6 +88,7 @@ class FacebookPreparer(PreparerInterface):
                 state=PostState.posted.value,
                 account_id=None,
                 image_objects=image_objects,
+                posted_time=posted_time_naive,
             )
             all_posts.append(post_object)
         return all_posts
