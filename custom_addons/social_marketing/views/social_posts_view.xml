@@ -1,7 +1,36 @@
 <?xml version="1.0"?>
 <odoo>
     <data>
-    
+
+        <record id="view_accounts_form" model="ir.ui.view">
+            <field name="name">marketing.accounts.posts.form</field>
+            <field name="model">marketing.accounts</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="social_media"/>
+                            <field name="id_name"/>
+                            <field name="full_name"/>
+                            <field name="fb_credentials_id"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_accounts_tree" model="ir.ui.view">
+            <field name="name">marketing.accounts.posts.tree</field>
+            <field name="model">marketing.accounts</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="social_media"/>
+                    <field name="id_name"/>
+                    <field name="full_name"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="view_social_posts_form" model="ir.ui.view">
             <field name="name">marketing.posts.form</field>
             <field name="model">marketing.posts</field>
@@ -12,16 +41,32 @@
                             <field name="social_id"/>
                             <field name="message"/>
                             <field name="schedule_time"/>
+                            <field name="posted_time"/>
                             <field name="state"/>
                             <field name="account_id"/>
                             <field name="image_ids">
                                 <tree>
                                     <field name="name"/>
                                     <field name="description"/>
-                                    <field name="image"/>
+                                    <field name="image" string="Media Size"/>
+                                    <field
+                                        name="image"
+                                        widget="image"
+                                        string="Image Preview"
+                                        class="oe_avatar"
+                                        options='{"preview_image": "image"}'
+                                    />
                                 </tree>
                             </field>
                         </group>
+                        <div class="oe_form_buttons">
+                            <button name="action_cancel" string="Cancel" type="object" class="oe_highlight"/>
+                            <button name="action_finish_later" string="Finish Later" type="object" class="oe_highlight"/>
+                            <button name="action_create_post" string="Create Post" type="object" class="oe_highlight"
+                                    attrs="{'invisible': [('social_id', '!=', False)]}"/>
+                            <button name="action_update_post" string="Update Post" type="object" class="oe_highlight"
+                                    attrs="{'invisible': [('social_id', '=', False)]}"/>
+                        </div>
                     </sheet>
                 </form>
             </field>
@@ -36,6 +81,7 @@
                     <field name="message"/>
                     <field name="account_id"/>
                     <field name="schedule_time"/>
+                    <field name="posted_time"/>
                     <field name="state"/>
                     <field name="likes_qty"/>
                     <field name="reposts_qty"/>
@@ -51,6 +97,17 @@
             </field>
         </record>
 
+        <record id="view_marketing_posts_calendar" model="ir.ui.view">
+            <field name="name">marketing.posts.calendar</field>
+            <field name="model">marketing.posts</field>
+            <field name="arch" type="xml">
+                <calendar
+                    string="Marketing Posts Calendar"
+                    date_start="schedule_time"
+                >
+                </calendar>
+            </field>
+        </record>
 
     </data>
 </odoo>
