@@ -212,23 +212,29 @@ class DataSynchronizer2:
         post_service = PostService('Facebook', acc_obj, post_object)
         post_errors = post_service.validate_prepare_post_data()
         if not post_errors:
-            post_db_object.write({
-                'state': PostState.posting.value
-            })
-            response_data = post_service.create_post_by_data()
-            social_id: Optional[IdType] = response_data.get('id')
-            post_db_object.write({
-                'social_id': social_id,
-                'state': PostState.posted.value,
-                'posted_time': fields.Datetime.now(),
-            }) if social_id else None
+            if post_db_object.schedule_time and\
+                    post_db_object.state == PostState.draft.value:
+                post_db_object.write({
+                    'state': PostState.scheduled.value
+                })
+                post_db_object.create_schedule_task()
+            else:
+                post_db_object.write({
+                    'state': PostState.posting.value
+                })
+                response_data = post_service.create_post_by_data()
+                social_id: Optional[IdType] = response_data.get('id')
+                post_db_object.write({
+                    'social_id': social_id,
+                    'state': PostState.posted.value,
+                    'posted_time': fields.Datetime.now(),
+                }) if social_id else None
         else:
             post_db_object.write({
                 'state': PostState.failed.value,
             })
             return post_errors
 
-    # TODO: create massive deletion like massive creation
     def delete_old_posts_from_db(self) -> None:
         db_posts_ids: Dict[AccountType, List[IdType]] = self._get_accounts_and_related_posts()
         get_service = GetService(self.social_medias, self.account_objects)

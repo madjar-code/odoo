@@ -39,10 +39,10 @@
                     <sheet>
                         <group>
                             <field name="social_id"/>
-                            <field name="message"/>
-                            <field name="schedule_time"/>
                             <field name="posted_time"/>
                             <field name="state"/>
+                            <field name="scheduled_action_id"/>
+                            <field name="message"/>
                             <field name="account_id"/>
                             <field name="image_ids">
                                 <tree>
@@ -58,14 +58,27 @@
                                     />
                                 </tree>
                             </field>
+                            <field name="now_flag" widget="boolean_toggle"
+                                attrs="{'invisible': ['|', ('state', '=', 'posted'), ('state', '=', 'scheduled')]}"/>
+                            <field name="schedule_time"
+                                attrs="{'invisible': ['|', ('now_flag', '=', False), ('state', '=', 'posted')]}"/>
                         </group>
                         <div class="oe_form_buttons">
                             <button name="action_cancel" string="Cancel" type="object" class="oe_highlight"/>
-                            <button name="action_finish_later" string="Finish Later" type="object" class="oe_highlight"/>
-                            <button name="action_create_post" string="Create Post" type="object" class="oe_highlight"
-                                    attrs="{'invisible': [('social_id', '!=', False)]}"/>
-                            <button name="action_update_post" string="Update Post" type="object" class="oe_highlight"
-                                    attrs="{'invisible': [('social_id', '=', False)]}"/>
+                            <button name="action_finish_later" string="Finish Later"
+                                    type="object" class="oe_highlight"/>
+
+                            <button name="action_create_post" string="Publish Now"
+                                    type="object" class="oe_highlight"
+                                    attrs="{'invisible': ['|', ('now_flag', '=', True), ('state', '=', 'posted')]}"/>
+
+                            <button name="action_create_post" string="Schedule"
+                                    type="object" class="oe_highlight"
+                                    attrs="{'invisible': [('now_flag', '=', False)]}"/>
+
+                            <button name="action_update_post" string="Update Post"
+                                    type="object" class="oe_highlight"
+                                    attrs="{'invisible': [('state', '!=', 'posted')]}"/>
                         </div>
                     </sheet>
                 </form>
@@ -104,10 +117,16 @@
                 <calendar
                     string="Marketing Posts Calendar"
                     date_start="schedule_time"
+                    quick_add="False"
+                    color="account_id"
                 >
+                    <field
+                        name="account_id"
+                        invisible="1"
+                        filters="1"
+                    />
                 </calendar>
             </field>
         </record>
-
     </data>
 </odoo>
