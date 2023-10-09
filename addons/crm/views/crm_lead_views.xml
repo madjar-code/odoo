@@ -267,7 +267,11 @@
                             <field name="property_ids" widget="kanban">
                                 <tree>
                                     <field name="prop_description_id"/>
-                                    <field name="value"/>
+                                    <field name="is_url"/>
+                                    <field name="value" 
+                                        widget="url"
+                                        t-attrs="{'widget': [('is_url', '=', True)]}"/>
+                                    <!-- <field name="value"/> -->
                                 </tree>
                             </field>
                             <!-- <field attrs="{'invisible': [('team_id', '=', False)]}"

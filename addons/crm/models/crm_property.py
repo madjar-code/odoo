@@ -1,5 +1,5 @@
 from enum import Enum
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class PropertyType(str, Enum):
@@ -49,6 +49,12 @@ class CRMPropertyDescription(models.Model):
     )
 
 
+
+class ValueType(str, Enum):
+    URL = 'url'
+    CHAR = 'char'
+
+
 class CRMPropertyValue(models.Model):
     _name = 'crm.prop.value'
     _description = 'Lead Property Value'
@@ -61,3 +67,18 @@ class CRMPropertyValue(models.Model):
                               string='Related Lead',
                               required=True,
                               ondelete='cascade')
+
+    is_url = fields.Boolean(compute='_compute_is_url',
+                            store=False, default=False,
+                            readonly=True)
+
+    @api.depends('value')
+    def _compute_is_url(self):
+        for record in self:
+            record.is_url = bool(record.value and record.value.startswith('http'))
+
+    def get_value_widget(self) -> ValueType:
+        if self.value and self.value.startswith('http'):
+            return ValueType.URL.value
+        else:
+            return ValueType.CHAR.value
