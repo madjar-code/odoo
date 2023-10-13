@@ -4,3 +4,5 @@ access_marketing_accounts,marketing.accounts,model_marketing_accounts,base.group
 access_fb_credentials,marketing.fb.credentials,model_marketing_fb_credentials,base.group_user,1,1,1,1
 access_image,marketing.image,model_marketing_image,base.group_user,1,1,1,1
 access_marketing_posts_wrapper,marketing.posts.wrapper,model_marketing_posts_wrapper,base.group_user,1,1,1,1
+access_marketing_comment,marketing.comment,model_marketing_comment,base.group_user,1,1,1,1
+access_marketing_lead_comment,marketing.lead.comment,model_marketing_lead_comment,base.group_user,1,1,1,1
