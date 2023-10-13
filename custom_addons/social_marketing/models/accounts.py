@@ -12,7 +12,11 @@ class Accounts(models.Model):
         selection=[(item.value, item.name)
                    for item in SocialMediaType],
         string='Account Social Media')
-    id_name = fields.Char('ID name for account identifying', required=False)
+    id_name = fields.Char(
+        'ID name for account identifying', required=False)
+    social_id = fields.Char(
+        string='Account ID in Social Media',
+        required=False, readonly=False)
     full_name = fields.Char('Full account name')
 
     post_ids = fields.One2many(
