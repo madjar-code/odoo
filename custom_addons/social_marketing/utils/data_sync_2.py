@@ -9,6 +9,7 @@ from typing import (
     Dict,
     Any,
 )
+from collections import defaultdict
 from odoo.models import fields
 from ..custom_types import (
     IdType,
@@ -68,6 +69,7 @@ class DataSynchronizer2:
                     self._update_existing_post(post_object)
                 new_social_ids.append(post_object.social_id)
         self._delete_non_existent_posts(existing_social_ids, new_social_ids)
+        self._delete_duplicate_posts()
 
     def create_new_posts_from_accounts(self) -> None:
         account_posts_objects = self._get_account_posts_objects()
@@ -167,6 +169,17 @@ class DataSynchronizer2:
                 ])
                 if post_to_delete:
                     post_to_delete.unlink()
+
+    def _delete_duplicate_posts(self) -> None:
+        all_posts = self._post_table.search([])
+        posts_by_social_id = defaultdict(list)
+        for post in all_posts:
+            posts_by_social_id[post.social_id].append(post)
+        for posts in posts_by_social_id.values():
+            if len(posts) > 1:
+                posts_to_delete = posts[1:]
+                for post in posts_to_delete:
+                    post.unlink()
 
     def from_db_to_accounts(self) -> None:
         self.create_new_posts_from_db()
