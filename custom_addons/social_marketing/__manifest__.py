@@ -1,5 +1,5 @@
 {
-    'name': 'A Social Marketing',
+    'name': 'Social Marketing',
     'summary': 'Use it for social marketing purposes',
     'category': 'Sales',
     'version': '0.1',
