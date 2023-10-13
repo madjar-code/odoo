@@ -15,7 +15,7 @@ ErrorType: TypeAlias = str
 PostsListType: TypeAlias = List[Dict]
 PostType: TypeAlias = Dict
 ImageType: TypeAlias = Dict
-CommentsListType: TypeAlias = List[Dict]
+CommentListType: TypeAlias = List[Dict]
 CommentType: TypeAlias = Dict
 FieldErrorsType: TypeAlias = Dict[FieldName, List[str]]
 
@@ -29,6 +29,13 @@ class Message(NamedTuple):
 class PostState(str, Enum):
     draft = 'draft'
     scheduled = 'scheduled'
+    posting = 'posting'
+    posted = 'posted'
+    failed = 'failed'
+
+    
+class CommentState(str, Enum):
+    draft = 'draft'
     posting = 'posting'
     posted = 'posted'
     failed = 'failed'
@@ -66,5 +73,16 @@ class PostObject(NamedTuple):
 class AccountObject(NamedTuple):
     id: IdType
     id_name: Optional[IdType]
+    social_id: IdType
     social_media: SocialMediaType
     credentials: Dict[str, str]
+
+
+class CommentObject(NamedTuple):
+    social_id: IdType
+    message: Optional[str]
+    author_id: Optional[str]
+    post_id: IdType
+    state: Optional[PostState]
+    posted_time: Optional[str]
+    parent_social_id: Optional[str]
