@@ -13,6 +13,9 @@ from typing import (
 from ..utils.data_sync_2 import (
     DataSynchronizer2,
 )
+from ..utils.comment_sync import (
+    CommentDataSynchronizer,
+)
 from ..custom_types import (
     FieldName,
     PostState,
@@ -51,6 +54,7 @@ class PostsWrapper(models.Model):
 class SocialPosts(models.Model):
     _name = 'marketing.posts'
     _description = 'Post Social Account'
+    _rec_name = 'social_id'
 
     social_id = fields.Char(
         string='Post ID in Social Media',
@@ -98,6 +102,14 @@ class SocialPosts(models.Model):
     image_ids = fields.One2many(
         'marketing.image', 'post_id',
         string='Post Images', required=False)
+
+    comment_ids = fields.One2many(
+        'marketing.comment', 'post_id',
+        string='Social Comments', required=False)
+
+    lead_comment_ids = fields.One2many(
+        'marketing.lead.comment', 'post_id',
+        string='Lead Comments', required=False)
     
     now_flag = fields.Boolean(
         string='Schedule', store=True)
@@ -127,13 +139,34 @@ class SocialPosts(models.Model):
             'target': 'current',
         }
 
+    def action_pull_comments(self):
+        if self.social_id:
+            account_object = self._get_one_account_for_post()[0]
+            CommentDataSynchronizer(account_object, self.social_id, self.id,
+                                    self.env['marketing.comment'],
+                                    self.env['marketing.posts']
+                                    ).comments_from_account_to_db()
+
+    def action_push_comments(self):
+        if self.social_id:
+            account_object = self._get_one_account_for_post()[0]
+            CommentDataSynchronizer(account_object, self.social_id, self.id,
+                                    self.env['marketing.comment'],
+                                    self.env['marketing.posts'],
+                                    self.env['crm.lead'],
+                                    ).comments_from_db_to_accounts()
+
+    # def action_sync_comments(self):
+    #     if self.social_id:
+    #         self.action_update_post_comments()
+    #         self.action_load_comments()
+
     def action_update_post(self):
         if self.social_id:
             print('\nАпдейт поста\n')
 
     def action_create_post(self):
         if not self.social_id:
-            # print('\nПроисходит создание поста\n')
             account_list_one_post = self._get_one_account_for_post()
             DataSynchronizer2(['Facebook'], account_list_one_post,
                             self.env['marketing.posts'],
@@ -156,7 +189,11 @@ class SocialPosts(models.Model):
                 'page_id': acc.fb_credentials_id.page_id,
             }
         account_object = AccountObject(
-            acc.id, None, acc.social_media, credentials
+            acc.id,
+            None,
+            acc.social_id,
+            acc.social_media,
+            credentials
         )
         return [account_object]
 
@@ -169,7 +206,13 @@ class SocialPosts(models.Model):
                     'access_token': acc.fb_credentials_id.access_token,
                     'page_id': acc.fb_credentials_id.page_id,
                 }
-            acc_obj = AccountObject(acc.id, None, acc.social_media, credentials)
+            acc_obj = AccountObject(
+                acc.id,
+                None,
+                acc.social_id,
+                acc.social_media,
+                credentials
+            )
             account_list.append(acc_obj)
         return account_list
 
@@ -221,7 +264,8 @@ class SocialPosts(models.Model):
         return super(SocialPosts, self).write(values)
 
     def unlink(self):
-        self.scheduled_action_id.unlink()
+        if self.scheduled_action_id:
+            self.scheduled_action_id.unlink()
         return super().unlink()
 
     def __str__(self) -> str:
