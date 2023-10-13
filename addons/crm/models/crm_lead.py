@@ -238,7 +238,9 @@ class Lead(models.Model):
     property_ids = fields.One2many('crm.prop.value',
                                     string='Property',
                                     inverse_name='lead_id')
-
+    lead_comment_ids = fields.One2many('marketing.lead.comment',
+                                       string='Lead Comments',
+                                       inverse_name='lead_id')
     _sql_constraints = [
         ('check_probability', 'check(probability >= 0 and probability <= 100)', 'The probability of closing the deal should be between 0% and 100%!')
     ]
@@ -907,6 +909,8 @@ class Lead(models.Model):
             ('res_id', 'in', self.ids),
             ('res_model', '=', self._name),
         ])
+        for lead_comment in self.lead_comment_ids:
+            lead_comment.unlink()
         if meetings:
             meetings.write({
                 'res_id': False,
