@@ -10,6 +10,7 @@
                         <button string="Edit" type="action" name="action_edit" class="oe_highlight"/>
                     </header> -->
                     <group>
+                        <field name="social_id"/>
                         <field name="name"/>
                         <field name="description"/>
                         <field name="image" widget="image" class="oe_avatar" options='{"preview_image": "image"}'/>
@@ -26,9 +27,10 @@
                 <form>
                     <sheet>
                         <group>
+                            <field name="social_id"/>
                             <field name="name"/>
                             <field name="description"/>
-                            <field name='post_id'/>
+                            <field name="post_id"/>
                             <field name="image"/>
                             <field
                                 name="image"
