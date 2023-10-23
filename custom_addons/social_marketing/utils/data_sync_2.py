@@ -67,9 +67,10 @@ class DataSynchronizer2:
                     self._create_non_existent_post(post_object, page_id)
                 else:
                     self._update_existing_post(post_object)
+                    # print(post_object)
                 new_social_ids.append(post_object.social_id)
-        self._delete_non_existent_posts(existing_social_ids, new_social_ids)
-        self._delete_duplicate_posts()
+        # self._delete_non_existent_posts(existing_social_ids, new_social_ids)
+        # self._delete_duplicate_posts()
 
     def create_new_posts_from_accounts(self) -> None:
         account_posts_objects = self._get_account_posts_objects()
@@ -119,6 +120,7 @@ class DataSynchronizer2:
         for image_object in post_object.image_objects:
             try:
                 image_data = {
+                    'social_id': image_object.social_id,
                     'name': image_object.name,
                     'description': image_object.description,
                     'image': image_object.image,
@@ -140,25 +142,35 @@ class DataSynchronizer2:
             }
             if update_values:
                 existing_post.write(update_values)
-                old_related_images = self._image_table.search([
-                    ('post_id', '=', existing_post.id)
-                ])
-
-            # if content was updated recreate new images
-            if update_values.get('message'):
-                for old_image in old_related_images:
-                    old_image.unlink()
-
-                for image_object in post_object.image_objects:
-                    image_data = {
-                        'name': image_object.name,
-                        'description': image_object.description,
-                        'image': image_object.image,
+            old_related_images_db = self._image_table.search([
+                ('post_id', '=', existing_post.id)
+            ]).read(['social_id'])
+            old_social_image_ids = [_image.get('social_id') for _image in old_related_images_db]
+            new_related_images = post_object.image_objects
+            new_images_social_ids: List[IdType] = []
+            for new_image in new_related_images:
+                if new_image.social_id not in old_social_image_ids:
+                    self._image_table.create({
+                        'social_id': new_image.social_id,
+                        'name': new_image.name,
+                        'description': new_image.description,
+                        'image': new_image.image,
                         'post_id': existing_post.id,
-                    }
-                    self._image_table.create(image_data)
+                    })
+                new_images_social_ids.append(new_image.social_id)
+            print(new_images_social_ids, old_social_image_ids)
+            self._delete_non_existent_images(old_social_image_ids, new_images_social_ids)
         except Exception as e:
             print(e)
+
+    def _delete_non_existent_images(self, old_social_image_ids, new_image_social_ids):
+        for old_social_id in old_social_image_ids:
+            if old_social_id not in new_image_social_ids:
+                image_to_delete = self._image_table.search([
+                    ('social_id', '=', old_social_id)
+                ])
+                if image_to_delete:
+                    image_to_delete.unlink()
 
     def _delete_non_existent_posts(self, existing_social_ids: List[IdType],
                                    new_social_ids: List[IdType]) -> None:
@@ -207,6 +219,7 @@ class DataSynchronizer2:
                 )
                 image_object = ImageObject(
                     name=f'image.{image_format}',
+                    social_id=None,
                     description=None,
                     format=image_format,
                     image=image_bytes_io,
@@ -235,13 +248,22 @@ class DataSynchronizer2:
                 post_db_object.write({
                     'state': PostState.posting.value
                 })
-                response_data = post_service.create_post_by_data()
+                response_data, media_ids = post_service.create_post_by_data()
                 social_id: Optional[IdType] = response_data.get('id')
-                post_db_object.write({
-                    'social_id': social_id,
-                    'state': PostState.posted.value,
-                    'posted_time': fields.Datetime.now(),
-                }) if social_id else None
+                if social_id:
+                    post_db_object.write({
+                        'social_id': social_id,
+                        'state': PostState.posted.value,
+                        'posted_time': fields.Datetime.now(),
+                    })
+                    for i, related_image in enumerate(related_images):
+                        related_image.write({
+                            'social_id': media_ids[i]
+                        })
+                else:
+                    post_db_object.write({
+                        'state': PostState.failed.value,
+                    })
         else:
             post_db_object.write({
                 'state': PostState.failed.value,
