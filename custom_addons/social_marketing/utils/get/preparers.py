@@ -93,7 +93,7 @@ class FacebookPreparer(PreparerInterface):
             all_posts.append(post_object)
         return all_posts
 
-    def _process_image(self, image_url: AnyUrl) -> ImageObject:
+    def _process_image(self, image_url: AnyUrl, image_social_id: IdType) -> ImageObject:
         image_data_bytes = self._get_image_bytes(image_url)
         image_data = io.BytesIO(image_data_bytes)
         image_data_base64 = base64.b64encode(image_data.read()).decode('utf-8')
@@ -104,6 +104,7 @@ class FacebookPreparer(PreparerInterface):
         image.close()
 
         image_object = ImageObject(
+            social_id=image_social_id,
             format=image_format,
             image=image_data_base64,
             name=None,
@@ -119,12 +120,14 @@ class FacebookPreparer(PreparerInterface):
                 subattachments = subattachments_objects['data']
                 for sub_image in subattachments:
                     image_url: AnyUrl = sub_image['media']['image']['src']
-                    image_object = self._process_image(image_url)
+                    image_social_id: IdType = sub_image['target']['id']
+                    image_object = self._process_image(image_url, image_social_id)
                     result_image_objects.append(image_object)
                 return result_image_objects
 
             image_url: AnyUrl = image['media']['image']['src']
-            image_object = self._process_image(image_url)
+            image_social_id: IdType = image['target']['id']
+            image_object = self._process_image(image_url, image_social_id)
             result_image_objects.append(image_object)
         return result_image_objects
 
