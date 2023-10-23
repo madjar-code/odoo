@@ -7,6 +7,7 @@ from ..custom_types import SocialMediaType
 
 class Accounts(models.Model):
     _name = 'marketing.accounts'
+    _rec_name = 'id_name'
 
     social_media = fields.Selection(
         selection=[(item.value, item.name)
@@ -24,10 +25,13 @@ class Accounts(models.Model):
         'account_id',
         string='Related Account Posts'
     )
-    
-    fb_credentials_id = fields.Many2one('marketing.fb.credentials',
-                                        string='Related Credentials Data',
-                                        ondelete='cascade', required=False)
+
+    fb_credentials_id = fields.Many2one(
+        'marketing.fb.credentials',
+        string='Related Credentials Data',
+        ondelete='cascade',
+        required=False
+    )
     _sql_constraints = (
         ('fb_credentials_id_unique', 'UNIQUE(fb_credentials_id)',
          'Each Account can be linked to only one Facebook credentials.'),
