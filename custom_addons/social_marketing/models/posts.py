@@ -24,47 +24,161 @@ from ..custom_types import (
 )
 
 
-class PostsWrapper(models.Model):
-    _name = 'marketing.posts.wrapper'
-
+class AggregatedPost(models.Model):
+    _name = 'marketing.aggregated.posts'
+    _description = 'Aggregated Post'
+    _rec_name = 'message'
+    _rec_names_search = (
+        'message',
+    )
+    account_ids = fields.Many2many(
+        comodel_name='marketing.accounts',
+        relation='aggregated_posts_accounts_rel',
+        string='Related Accounts'
+    )
     post_ids = fields.One2many(
-        'marketing.posts',
-        'wrapper_id',
-        string='Wrapped Posts',
+        comodel_name='marketing.posts',
+        inverse_name='aggregated_post_id',
+        string='Related Posts',
+        readonly=True
+    )
+    state = fields.Selection(
+        selection=[(item.value, item.name)
+                    for item in PostState],
+        # readonly=True,
+        compute='_compute_state',
+        string='Aggregate State',
+        default=PostState.draft.value
+    )
+    message = fields.Char(string='Posts Message', required=True)
+    now_flag = fields.Boolean(string='Schedule', store=True)
+    schedule_time = fields.Datetime(
+        string='Schedule Time Field',
         required=False,
+        default=False,
     )
-    total_likes = fields.Integer(
-        string='Total Likes',
-        compute='_compute_total_likes',
-        store=True,
-        readonly=True,
-    )
-    
-    @api.depends('post_ids.likes_qty')
-    def _compute_total_likes(self) -> int:
-        for wrapper in self:
-            total_likes = sum(wrapper.post_ids.mapped('likes_qty'))
-            wrapper.total_likes = total_likes
 
-    @api.onchange('post_ids')
-    def _onchange_post_ids(self) -> None:
-        self._compute_total_likes()
+    @api.onchange('schedule_time')
+    def _onchange_schedule_time(self):
+        for agg_post in self:
+            if agg_post.schedule_time and datetime.now() > agg_post.schedule_time:
+                raise ValidationError('Schedule time cannot be in the past.')
+
+    @api.depends('post_ids.state')
+    def _compute_state(self):
+        for agg_post in self:
+            states: List[PostState] = agg_post.post_ids.mapped('state')
+            states_set = set(states)
+            if len(states_set) == 1:
+                agg_state = states_set.pop()
+            elif len(states_set) == 0:
+                agg_state = PostState.draft.value
+            else:
+                agg_state = PostState.mixed.value
+            agg_post.write({
+                'state': agg_state
+            })
+
+    def action_initialize_posts(self):
+        self._initialize_posts_for_new_accs()
+
+    def action_update_posts(self):
+        self._initialize_posts_for_new_accs()
+        for post in self.post_ids:
+            if post.state != PostState.posted.value:
+                self._update_non_published_post(post)
+            else:
+                self._update_published_post(post)
+
+    def _initialize_posts_for_new_accs(self):
+        for account in self.account_ids:
+            existing_post = self.post_ids.filtered(
+                lambda post: post.account_id == account)
+            if not existing_post:
+                new_post = self.env['marketing.posts'].create({
+                    'account_id': account.id,
+                    'message': self.message,
+                    'aggregated_post_id': self.id,
+                })
+                if self.schedule_time:
+                    new_post.write({
+                        'now_flag': False,
+                        'state': PostState.scheduled.value,
+                        'schedule_time': self.schedule_time
+                    })
+                    new_post.create_schedule_task()
+                self.post_ids += new_post
+
+    def _update_non_published_post(self, post: 'SocialPosts'):
+        if post.account_id not in self.account_ids:
+            post.unlink()
+        else:
+            if post.message != self.message:
+                post.write({
+                    'message': self.message,
+                })
+
+            if not post.schedule_time and self.schedule_time:
+                post.write({
+                    'now_flag': False,
+                    'state': PostState.scheduled,
+                    'schedule_time': self.schedule_time
+                })
+                post.create_schedule_task()
+            elif not self.schedule_time and post.schedule_time:
+                post.scheduled_action_id.unlink()
+                post.write({
+                    'now_flag': True,
+                    'state': PostState.draft,
+                    'schedule_time': False
+                })
+            elif self.schedule_time != post.schedule_time:
+                post.write({
+                    'schedule_time': self.schedule_time,
+                })
+
+    def _update_published_post(self, post):
+        if post.account_id not in self.account_ids:
+            post.action_unpin_post()
+        else:
+            # TODO: реализовать запрос на UPDATE
+            pass
+
+    def action_publish_posts(self):
+        for post in self.post_ids:
+            if post.state == PostState.draft:
+                post.action_create_post()
+            elif post.state == PostState.scheduled:
+                post.action_create_post()
+                post.schedule_time = False
+                post.scheduled_action_id.unlink()
+
+    def unlink(self):
+        for post in self.post_ids:
+            if post.state != PostState.posted.value:
+                post.unlink()
+            else:
+                post.action_delete_post()
+        return super().unlink()
 
 
 class SocialPosts(models.Model):
     _name = 'marketing.posts'
     _description = 'Post Social Account'
-    _rec_name = 'social_id'
+    _rec_name = 'message'
 
     social_id = fields.Char(
         string='Post ID in Social Media',
-        required=False, readonly=True)
+        required=False,
+        readonly=True
+    )
     message = fields.Char(string='Post Message', required=False)
 
     schedule_time = fields.Datetime(
-        string='Schedule Time Field', required=False,
-        default=False)
-
+        string='Schedule Time Field',
+        required=False,
+        default=False
+    )
     posted_time = fields.Datetime(
         string='Posted Time',
         # compute='_compute_posted_time',
@@ -75,26 +189,46 @@ class SocialPosts(models.Model):
         selection=[(item.value, item.name)
                     for item in PostState],
         readonly=True,
-        string='Post State', default=PostState.draft.value)
-
+        string='Post State',
+        default=PostState.draft.value
+    )
     likes_qty = fields.Integer(
-        string='Number of Likes', default=0, readonly=True)
+        string='Number of Likes',
+        default=0,
+        readonly=True
+    )
     reposts_qty = fields.Integer(
-        string='Number of Reposts', default=0, readonly=True)
+        string='Number of Reposts',
+        default=0,
+        readonly=True
+    )
     views_qty = fields.Integer(
-        string='Number of Views', default=0, readonly=True)
+        string='Number of Views',
+        default=0,
+        readonly=True
+    )
     comments_qty = fields.Integer(
-        string='Number of Comments', default=0, readonly=True)
+        string='Number of Comments',
+        default=0,
+        readonly=True
+    )
     
     # changed = fields.Boolean(
     #     string='Is Synced?', default=True, readonly=True)
 
     account_id = fields.Many2one(
-        'marketing.accounts', string='Related Account',
-        ondelete='cascade', required=True)
-    wrapper_id = fields.Many2one(
-        'marketing.posts.wrapper', string='Related Posts Wrapper',
-        ondelete='set null', required=False)
+        'marketing.accounts',
+        string='Related Account',
+        ondelete='cascade',
+        required=True
+    
+    )
+    aggregated_post_id = fields.Many2one(
+        comodel_name='marketing.aggregated.posts',
+        string='Related Aggregated Posts',
+        ondelete='set null',
+        required=False,
+    )
     scheduled_action_id = fields.Many2one(
         'ir.cron', string='Related Task',
         ondelete='set null', required=False,
@@ -111,8 +245,7 @@ class SocialPosts(models.Model):
         'marketing.lead.comment', 'post_id',
         string='Lead Comments', required=False)
     
-    now_flag = fields.Boolean(
-        string='Schedule', store=True)
+    now_flag = fields.Boolean(string='Schedule', store=True)
 
     @api.onchange('schedule_time')
     def _onchange_schedule_time(self):
@@ -138,6 +271,14 @@ class SocialPosts(models.Model):
             'res_id': self.id,
             'target': 'current',
         }
+
+    def action_unpin_post(self):
+        self.aggregated_post_id.write({
+            'account_ids': [(3, self.account_id.id, 0)]
+        })
+        self.write({
+            'aggregated_post_id': False,
+        })
 
     def action_pull_comments(self):
         if self.social_id:
@@ -169,10 +310,20 @@ class SocialPosts(models.Model):
         if not self.social_id:
             account_list_one_post = self._get_one_account_for_post()
             DataSynchronizer2(['Facebook'], account_list_one_post,
-                            self.env['marketing.posts'],
-                            self.env['marketing.image'],
-                            self.env['marketing.accounts'],
-                            ).create_one_post_from_db(self)
+                              self.env['marketing.posts'],
+                              self.env['marketing.image'],
+                              self.env['marketing.accounts'],
+                             ).create_one_post_from_db(self)
+
+    def action_delete_post(self):
+        if self.social_id:
+            account_list_one_post = self._get_one_account_for_post()
+            DataSynchronizer2(['Facebook'], account_list_one_post,
+                              self.env['marketing.posts'],
+                              self.env['marketing.image'],
+                              self.env['marketing.accounts']
+                             ).delete_one_post_from_db(self.social_id)
+            self.unlink()
 
     def _create_post_by_id(self, post_id: IdType):
         post_object = self.env['marketing.posts'].search([
@@ -261,11 +412,17 @@ class SocialPosts(models.Model):
             self.scheduled_action_id.write(
                 {'nextcall': new_schedule_time,}
             )
+        if 'message' in values and self.aggregated_post_id:
+            new_message = values.get('message')
+            if new_message != self.aggregated_post_id.message:
+                self.action_unpin_post()
         return super(SocialPosts, self).write(values)
 
     def unlink(self):
         if self.scheduled_action_id:
             self.scheduled_action_id.unlink()
+        if self.aggregated_post_id:
+            self.action_unpin_post()
         return super().unlink()
 
     def __str__(self) -> str:
