@@ -32,6 +32,7 @@ class PostState(str, Enum):
     posting = 'posting'
     posted = 'posted'
     failed = 'failed'
+    mixed = 'mixed'
 
     
 class CommentState(str, Enum):
@@ -51,6 +52,7 @@ class SocialMediaType(str, Enum):
 
 class ImageObject(NamedTuple):
     name: Optional[str]
+    social_id: Optional[IdType]
     format: str
     description: Optional[str]
     image: bytes
