@@ -23,7 +23,11 @@ class Image(models.Model):
         string='Image Data',
         attachment=True
     )
-
+    social_id = fields.Char(
+        string='Post ID in Social Media',
+        required=False,
+        readonly=True
+    )
     post_id = fields.Many2one(
         'marketing.posts',
         string='Image Post',
