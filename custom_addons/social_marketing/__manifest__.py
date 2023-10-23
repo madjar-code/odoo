@@ -8,7 +8,7 @@
         'views/marketing_menus.xml',
         'views/social_posts_view.xml',
         'views/media_view.xml',
-        'views/posts_wrapper_view.xml',
+        'views/aggregated_posts_view.xml',
     ),
     'installable': True,
     'application': True,
