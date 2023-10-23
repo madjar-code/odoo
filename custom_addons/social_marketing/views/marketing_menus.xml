@@ -27,11 +27,11 @@
     </record>
 
     <record
-        id="action_posts_wrapper"
+        id="action_aggregated_posts"
         model="ir.actions.act_window"
     >
         <field name="name">Common Posts</field>
-        <field name="res_model">marketing.posts.wrapper</field>
+        <field name="res_model">marketing.aggregated.posts</field>
         <field name="view_mode">tree,form</field>
     </record>
 
@@ -57,10 +57,10 @@
         action="action_schedule_posts"/>
     
     <menuitem
-        id="marketing_posts_wrapper_menu"
+        id="marketing_aggregated_posts_menu"
         name="Common Posts"
         parent="social_marketing_menu"
-        action="action_posts_wrapper"/>
+        action="action_aggregated_posts"/>
 
     <menuitem
         id="marketing_posts_accounts_menu"
