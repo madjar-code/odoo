@@ -47,6 +47,7 @@
                             <field name="account_id"/>
                             <field name="image_ids">
                                 <tree>
+                                    <field name="social_id"/>
                                     <field name="name"/>
                                     <field name="description"/>
                                     <field name="image" string="Media Size"/>
@@ -59,14 +60,29 @@
                                     />
                                 </tree>
                             </field>
-                            <field name="now_flag" widget="boolean_toggle"
-                                attrs="{'invisible': ['|', ('state', '=', 'posted'), ('state', '=', 'scheduled')]}"/>
-                            <field name="schedule_time"
-                                attrs="{'invisible': ['|', ('now_flag', '=', False), ('state', '=', 'posted')]}"/>
-                            <button name='action_pull_comments' string='Pull Comments' type='object'
-                                    class='oe_highlight' attrs="{'invisible': [('state', '!=', 'posted')]}"/>
-                            <button name='action_push_comments' string="Push Comments" type="object"
-                                    class="oe_highlight" attrs="{'invisible': [('state', '!=', 'posted')]}"/>
+                            <field
+                                name="now_flag"
+                                widget="boolean_toggle"
+                                attrs="{'invisible': ['|', ('state', '=', 'posted'), ('state', '=', 'scheduled')]}"
+                            />
+                            <field
+                                name="schedule_time"
+                                attrs="{'invisible': ['|', ('now_flag', '=', False), ('state', '=', 'posted')]}"
+                            />
+                            <button
+                                name='action_pull_comments'
+                                string='Pull Comments'
+                                type='object'
+                                class='oe_highlight'
+                                attrs="{'invisible': [('state', '!=', 'posted')]}"
+                            />
+                            <button
+                                name='action_push_comments'
+                                string="Push Comments"
+                                type="object"
+                                class="oe_highlight"
+                                attrs="{'invisible': [('state', '!=', 'posted')]}"
+                            />
                             <!-- <button name='action_update_post_comments' string='Update Comments' type='object'
                                     class='oe_highlight' attrs="{'invisible': [('state', '!=', 'posted')]}"/> -->
                         </group>
@@ -85,31 +101,57 @@
                                     <!-- <button string="Nested"
                                             name="action_load_nested_comments"
                                             type="object" class="oe_highlight"/> -->
-                                    <button string="Create Lead"
-                                        name="action_create_lead" type="object" class="oe_highlight"
-                                        attrs="{'invisible': ['|', ('has_lead_comment', '=', True), ('has_account_relation', '=', True)]}"/>
-                                    <button string="Go to Lead"
-                                        name="action_go_to_lead" type="object" class="oe_highlight"
-                                        attrs="{'invisible': ['|', ('has_lead_comment', '=', False), ('has_account_relation', '=', True)]}"/>
+                                    <button
+                                        string="Create Lead"
+                                        name="action_create_lead"
+                                        type="object"
+                                        class="oe_highlight"
+                                        attrs="{'invisible': ['|', ('has_lead_comment', '=', True), ('has_account_relation', '=', True)]}"
+                                    />
+                                    <button
+                                        string="Go to Lead"
+                                        name="action_go_to_lead"
+                                        type="object"
+                                        class="oe_highlight"
+                                        attrs="{'invisible': ['|', ('has_lead_comment', '=', False), ('has_account_relation', '=', True)]}"
+                                    />
                                 </tree>
                             </field>
                         </group>
                         <div class="oe_form_buttons">
-                            <button name="action_cancel" string="Cancel" type="object" class="oe_highlight"/>
-                            <button name="action_finish_later" string="Finish Later"
-                                    type="object" class="oe_highlight"/>
-
-                            <button name="action_create_post" string="Publish Now"
-                                    type="object" class="oe_highlight"
-                                    attrs="{'invisible': ['|', ('now_flag', '=', True), ('state', '=', 'posted')]}"/>
-
-                            <button name="action_create_post" string="Schedule"
-                                    type="object" class="oe_highlight"
-                                    attrs="{'invisible': [('now_flag', '=', False)]}"/>
-
-                            <button name="action_update_post" string="Update Post"
-                                    type="object" class="oe_highlight"
-                                    attrs="{'invisible': [('state', '!=', 'posted')]}"/>
+                            <button
+                                name="action_cancel"
+                                string="Cancel"
+                                type="object"
+                                class="oe_highlight"
+                            />
+                            <button
+                                name="action_finish_later"
+                                string="Finish Later"
+                                type="object"
+                                class="oe_highlight"
+                            />
+                            <button
+                                name="action_create_post"
+                                string="Publish Now"
+                                type="object"
+                                class="oe_highlight"
+                                attrs="{'invisible': ['|', ('now_flag', '=', True), ('state', '=', 'posted')]}"
+                            />
+                            <button
+                                name="action_create_post"
+                                string="Schedule"
+                                type="object"
+                                class="oe_highlight"
+                                attrs="{'invisible': [('now_flag', '=', False)]}"
+                            />
+                            <button
+                                name="action_update_post"
+                                string="Update Post"
+                                type="object"
+                                class="oe_highlight"
+                                attrs="{'invisible': [('state', '!=', 'posted')]}"
+                            />
                         </div>
                     </sheet>
                 </form>
@@ -134,8 +176,18 @@
                     <!-- <field name="changed"/> -->
                     <field name="image_ids"/>
                     <header>
-                        <button name='from_accounts_to_db' string='FROM ACCOUNTS' type='object' class='oe_highlight'/>
-                        <button name='from_db_to_accounts' string='MAKE REQUESTS' type='object' class='oe_highlight'/>
+                        <button
+                            name='from_accounts_to_db'
+                            string='Pull Posts'
+                            type='object'
+                            class='oe_highlight'
+                        />
+                        <button
+                            name='from_db_to_accounts'
+                            string='Push Posts'
+                            type='object'
+                            class='oe_highlight'
+                        />
                     </header>
                 </tree>
             </field>
@@ -151,11 +203,11 @@
                     quick_add="False"
                     color="account_id"
                 >
-                    <field
-                        name="account_id"
-                        invisible="1"
-                        filters="1"
-                    />
+                <field
+                    name="account_id"
+                    invisible="1"
+                    filters="1"
+                />
                 </calendar>
             </field>
         </record>
