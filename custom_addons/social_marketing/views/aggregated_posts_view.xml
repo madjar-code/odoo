@@ -103,7 +103,6 @@
                 </form>
             </field>
         </record>
-        # сделать несколько изображений загрузку.
 
         <record id="view_aggregated_posts_tree" model="ir.ui.view">
             <field name="name">marketing.aggregated.posts.tree</field>
