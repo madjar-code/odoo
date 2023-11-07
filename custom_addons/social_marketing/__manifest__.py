@@ -9,6 +9,7 @@
         'views/social_posts_view.xml',
         'views/media_view.xml',
         'views/aggregated_posts_view.xml',
+        'views/groups_view.xml',
     ),
     'installable': True,
     'application': True,
