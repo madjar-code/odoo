@@ -23,13 +23,11 @@ UPDATE_FIELDS = {
 }
 
 
-class CommentDataSynchronizer:
+class CommentSynchronizer:
     def __init__(self,
                  account_object: AccountObject,
                  post_social_id: IdType, post_id: IdType,
                  comment_table, post_table, lead_table = None) -> None:
-        self._page_id = account_object.credentials['page_id']
-        self._access_token = account_object.credentials['access_token']
         self.account_object = account_object
         self._post_social_id = post_social_id
         self._post_id = post_id
@@ -50,7 +48,6 @@ class CommentDataSynchronizer:
         for comment_object in comment_objects:
             if comment_object.social_id not in existing_social_ids:
                 self._comment_table.create(comment_object._asdict())
-                print(comment_object._asdict())
             else:
                 self._update_existing_comment(comment_object)
             new_social_ids.append(comment_object.social_id)
@@ -174,12 +171,6 @@ class CommentDataSynchronizer:
                         comment_db
                     )
                     update_service.update_comment_by_data()    
-                    # lead_records = self._lead_table.search([
-                    #     ('name', 'ilike', str(comment_db.social_id))
-                    # ])
-                    # lead_records.write({
-                    #     'description': f'Comment Message: {comment_db.message}'
-                    # })
 
     def _compare_db_and_api_object(self,
                                    comment_db: CommentObject,
@@ -188,18 +179,3 @@ class CommentDataSynchronizer:
         if comment_db.message != comment_api.message:
             result_fields.append(UPDATE_FIELDS['message'])
         return result_fields
-
-    # def nested_comments_from_account_to_db(self, comment_social_id: IdType,
-    #                                        comment_id: IdType) -> None:
-    #     nested_comments: List[CommentObject] = FBCommentService(
-    #         self.account_object, 
-    #         self._post_social_id,
-    #         self._post_id,
-    #     ).get_comments_object_by_comment_id(comment_social_id)
-    #     for comment_object in nested_comments:
-    #         nested_comment_db_object =\
-    #             self._comment_table.create(comment_object._asdict())
-    #         nested_comment_db_object.write({
-    #             'parent_id': comment_id,
-    #         })
-    #         print(f'\n\n{nested_comment_db_object}\n\n')
