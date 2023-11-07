@@ -6,3 +6,4 @@ access_image,marketing.image,model_marketing_image,base.group_user,1,1,1,1
 access_aggregated_post,marketing.aggregated.posts,model_marketing_aggregated_posts,base.group_user,1,1,1,1
 access_marketing_comment,marketing.comment,model_marketing_comment,base.group_user,1,1,1,1
 access_marketing_lead_comment,marketing.lead.comment,model_marketing_lead_comment,base.group_user,1,1,1,1
+access_marketing_stat_group,marketing.stat.groups,model_marketing_stat_groups,base.group_user,1,1,1,1
