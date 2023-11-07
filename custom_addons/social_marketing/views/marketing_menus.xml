@@ -44,27 +44,53 @@
         <field name="view_mode">tree,form</field>
     </record>
 
+    <record
+        id='action_stat_groups'
+        model='ir.actions.act_window'
+    >
+        <field name="name">Statistic Groups</field>
+        <field name="res_model">marketing.stat.groups</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
     <menuitem
-        id="marketing_posts_menu"
-        name="Social Posts"
+        id="marketing_feed_menu"
+        name="Feed"
         parent="social_marketing_menu"
-        action="action_social_marketing"/>
+        action="action_social_marketing"
+    />
+
+    <menuitem 
+        id="marketing_posts_menu"
+        name="Posts"
+        parent="social_marketing_menu"
+    />
 
     <menuitem
         id="marketing_schedule_posts_menu"
         name="Schedule Posts"
-        parent="social_marketing_menu"
-        action="action_schedule_posts"/>
+        parent="marketing_posts_menu"
+        action="action_schedule_posts"
+    />
     
     <menuitem
         id="marketing_aggregated_posts_menu"
-        name="Common Posts"
-        parent="social_marketing_menu"
-        action="action_aggregated_posts"/>
+        name="Aggregated Posts"
+        parent="marketing_posts_menu"
+        action="action_aggregated_posts"
+    />
 
     <menuitem
         id="marketing_posts_accounts_menu"
-        name="Social Accounts"
+        name="Accounts"
         parent="social_marketing_menu"
-        action="action_posts_accounts"/>    
+        action="action_posts_accounts"
+    />
+
+    <menuitem
+        id="marketing_stat_groups_menu"
+        name="Groups"
+        parent="social_marketing_menu"
+        action="action_stat_groups"
+    />
 </odoo>
