@@ -1,21 +1,17 @@
 from datetime import datetime
+from typing import (
+    List,
+    Dict,
+    Any,
+)
 from odoo import (
     models,
     fields,
     api,
 )
 from odoo.exceptions import ValidationError
-from typing import (
-    List,
-    Dict,
-    Any,
-)
-from ..utils.data_sync_2 import (
-    DataSynchronizer2,
-)
-from ..utils.comment_sync import (
-    CommentDataSynchronizer,
-)
+from ..utils.comment_sync import CommentSynchronizer
+from ..utils.post_sync import PostSynchronizer
 from ..custom_types import (
     FieldName,
     PostState,
@@ -45,7 +41,6 @@ class AggregatedPost(models.Model):
     state = fields.Selection(
         selection=[(item.value, item.name)
                     for item in PostState],
-        # readonly=True,
         compute='_compute_state',
         string='Aggregate State',
         default=PostState.draft.value
@@ -81,11 +76,15 @@ class AggregatedPost(models.Model):
 
     def action_initialize_posts(self):
         self._initialize_posts_for_new_accs()
+        self.env['marketing.stat.groups'].create({
+            'title': f'Group for Aggregate - {self.id}',
+            'post_ids': self.post_ids if self.post_ids else [],
+        })
 
     def action_update_posts(self):
         self._initialize_posts_for_new_accs()
         for post in self.post_ids:
-            if post.state != PostState.posted.value:
+            if post.state != PostState.posted:
                 self._update_non_published_post(post)
             else:
                 self._update_published_post(post)
@@ -93,7 +92,8 @@ class AggregatedPost(models.Model):
     def _initialize_posts_for_new_accs(self):
         for account in self.account_ids:
             existing_post = self.post_ids.filtered(
-                lambda post: post.account_id == account)
+                lambda post: post.account_id == account
+            )
             if not existing_post:
                 new_post = self.env['marketing.posts'].create({
                     'account_id': account.id,
@@ -103,7 +103,7 @@ class AggregatedPost(models.Model):
                 if self.schedule_time:
                     new_post.write({
                         'now_flag': False,
-                        'state': PostState.scheduled.value,
+                        'state': PostState.scheduled,
                         'schedule_time': self.schedule_time
                     })
                     new_post.create_schedule_task()
@@ -137,28 +137,22 @@ class AggregatedPost(models.Model):
                     'schedule_time': self.schedule_time,
                 })
 
-    def _update_published_post(self, post):
-        if post.account_id not in self.account_ids:
-            post.action_unpin_post()
-        else:
-            # TODO: реализовать запрос на UPDATE
-            pass
+    def _update_published_post(self: 'AggregatedPost',
+                               post: 'SocialPosts'):
+        if post.message != self.message:
+            post.write({
+                'message': self.message,
+            })
+            post.action_update_post()
 
     def action_publish_posts(self):
         for post in self.post_ids:
-            if post.state == PostState.draft:
-                post.action_create_post()
-            elif post.state == PostState.scheduled:
-                post.action_create_post()
-                post.schedule_time = False
-                post.scheduled_action_id.unlink()
+            post.action_publish_post()
 
     def unlink(self):
         for post in self.post_ids:
             if post.state != PostState.posted.value:
                 post.unlink()
-            else:
-                post.action_delete_post()
         return super().unlink()
 
 
@@ -212,40 +206,62 @@ class SocialPosts(models.Model):
         default=0,
         readonly=True
     )
-    
     # changed = fields.Boolean(
     #     string='Is Synced?', default=True, readonly=True)
-
     account_id = fields.Many2one(
         'marketing.accounts',
         string='Related Account',
         ondelete='cascade',
         required=True
-    
     )
     aggregated_post_id = fields.Many2one(
         comodel_name='marketing.aggregated.posts',
-        string='Related Aggregated Posts',
+        string='Related Aggregated Post',
+        ondelete='set null',
+        required=False,
+    )
+    stat_group_id = fields.Many2one(
+        comodel_name='marketing.stat.groups',
+        string='Related Statistic Group',
         ondelete='set null',
         required=False,
     )
     scheduled_action_id = fields.Many2one(
-        'ir.cron', string='Related Task',
-        ondelete='set null', required=False,
-        readonly=True)
+        'ir.cron',
+        string='Related Task',
+        ondelete='set null',
+        required=False,
+        readonly=True
+    )
     image_ids = fields.One2many(
-        'marketing.image', 'post_id',
-        string='Post Images', required=False)
-
+        'marketing.image',
+        'post_id',
+        string='Post Images',
+        required=False
+    )
     comment_ids = fields.One2many(
-        'marketing.comment', 'post_id',
-        string='Social Comments', required=False)
+        'marketing.comment',
+        'post_id',
+        string='Social Comments',
+        required=False
+    )
 
     lead_comment_ids = fields.One2many(
-        'marketing.lead.comment', 'post_id',
-        string='Lead Comments', required=False)
-    
+        'marketing.lead.comment',
+        'post_id',
+        string='Lead Comments',
+        required=False
+    )
+
     now_flag = fields.Boolean(string='Schedule', store=True)
+
+    def get_social_ids_from_images(self) -> List[IdType]:
+        social_ids: List[IdType] = []
+        for post in self:
+            for image in post.image_ids:
+                if image.social_id:
+                    social_ids.append(image.social_id)
+        return social_ids
 
     @api.onchange('schedule_time')
     def _onchange_schedule_time(self):
@@ -272,57 +288,76 @@ class SocialPosts(models.Model):
             'target': 'current',
         }
 
-    def action_unpin_post(self):
-        self.aggregated_post_id.write({
-            'account_ids': [(3, self.account_id.id, 0)]
-        })
-        self.write({
-            'aggregated_post_id': False,
-        })
+    def action_aggregate_unpin_post(self):
+        for post in self:
+            for account in post.account_id:
+                post.aggregated_post_id.write({
+                    'account_ids': [(3, account.id, 0)]
+                })
+            post.write({
+                'aggregated_post_id': False,
+            })
+
+    def action_publish_post(self):
+        if self.state in (PostState.draft,
+                          PostState.failed):
+            self.action_create_post()
+        elif self.state == PostState.scheduled:
+            self.action_create_post()
+            self.scheduled_action_id.unlink()
+            self.write({
+                'schedule_time': False,
+            })
 
     def action_pull_comments(self):
         if self.social_id:
             account_object = self._get_one_account_for_post()[0]
-            CommentDataSynchronizer(account_object, self.social_id, self.id,
-                                    self.env['marketing.comment'],
-                                    self.env['marketing.posts']
-                                    ).comments_from_account_to_db()
+            CommentSynchronizer(
+                account_object,
+                self.social_id,
+                self.id,
+                self.env['marketing.comment'],
+                self.env['marketing.posts']
+            ).comments_from_account_to_db()
 
     def action_push_comments(self):
         if self.social_id:
             account_object = self._get_one_account_for_post()[0]
-            CommentDataSynchronizer(account_object, self.social_id, self.id,
-                                    self.env['marketing.comment'],
-                                    self.env['marketing.posts'],
-                                    self.env['crm.lead'],
-                                    ).comments_from_db_to_accounts()
-
-    # def action_sync_comments(self):
-    #     if self.social_id:
-    #         self.action_update_post_comments()
-    #         self.action_load_comments()
+            CommentSynchronizer(
+                account_object,
+                self.social_id,
+                self.id,
+                self.env['marketing.comment'],
+                self.env['marketing.posts'],
+                self.env['crm.lead'],
+            ).comments_from_db_to_accounts()
 
     def action_update_post(self):
         if self.social_id:
-            print('\nАпдейт поста\n')
+            post_sync = PostSynchronizer(
+                self.env['marketing.image'],
+                self.env['marketing.posts'],
+                self.env['marketing.stat.groups'],
+            )
+            post_sync.update_one_post_db_to_acc(self)
 
     def action_create_post(self):
         if not self.social_id:
-            account_list_one_post = self._get_one_account_for_post()
-            DataSynchronizer2(['Facebook'], account_list_one_post,
-                              self.env['marketing.posts'],
-                              self.env['marketing.image'],
-                              self.env['marketing.accounts'],
-                             ).create_one_post_from_db(self)
+            post_sync = PostSynchronizer(
+                self.env['marketing.image'],
+                self.env['marketing.posts'],
+                self.env['marketing.stat.groups'],
+            )
+            post_sync.create_one_post_db_to_acc(self)
 
     def action_delete_post(self):
         if self.social_id:
-            account_list_one_post = self._get_one_account_for_post()
-            DataSynchronizer2(['Facebook'], account_list_one_post,
-                              self.env['marketing.posts'],
-                              self.env['marketing.image'],
-                              self.env['marketing.accounts']
-                             ).delete_one_post_from_db(self.social_id)
+            post_sync = PostSynchronizer(
+                self.env['marketing.image'],
+                self.env['marketing.posts'],
+                self.env['marketing.stat.groups'],
+            )
+            post_sync.delete_one_post_db_to_acc(self)
             self.unlink()
 
     def _create_post_by_id(self, post_id: IdType):
@@ -368,20 +403,20 @@ class SocialPosts(models.Model):
         return account_list
 
     def from_accounts_to_db(self) -> None:
-        account_list = self._get_all_account_objects()
-        DataSynchronizer2(['Facebook'], account_list,
-                         self.env['marketing.posts'],
-                         self.env['marketing.image'],
-                         self.env['marketing.accounts'],
-                         ).from_accounts_to_db()
+        account_records = self.env['marketing.accounts'].search([])
+        PostSynchronizer(
+            self.env['marketing.image'],
+            self.env['marketing.posts'],
+            self.env['marketing.stat.groups'],
+        ).from_accounts_to_db(account_records)
 
     def from_db_to_accounts(self) -> None:
-        account_list = self._get_all_account_objects()
-        DataSynchronizer2(['Facebook'], account_list,
-                         self.env['marketing.posts'],
-                         self.env['marketing.image'],
-                         self.env['marketing.accounts'],
-                         ).from_db_to_accounts()
+        account_records = self.env['marketing.accounts'].search([])
+        PostSynchronizer(
+            self.env['marketing.image'],
+            self.env['marketing.posts'],
+            self.env['marketing.stat.groups'],
+        ).from_db_to_accounts(account_records)
 
     def create_schedule_task(self) -> None:
         if self.schedule_time:
@@ -415,14 +450,14 @@ class SocialPosts(models.Model):
         if 'message' in values and self.aggregated_post_id:
             new_message = values.get('message')
             if new_message != self.aggregated_post_id.message:
-                self.action_unpin_post()
+                self.action_aggregate_unpin_post()
         return super(SocialPosts, self).write(values)
 
     def unlink(self):
         if self.scheduled_action_id:
             self.scheduled_action_id.unlink()
         if self.aggregated_post_id:
-            self.action_unpin_post()
+            self.action_aggregate_unpin_post()
         return super().unlink()
 
     def __str__(self) -> str:
