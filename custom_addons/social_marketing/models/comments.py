@@ -1,6 +1,5 @@
 from odoo import models, fields, api
 from ..custom_types import CommentState
-from ..utils.comment_sync import CommentDataSynchronizer
 
 
 class SocialComment(models.TransientModel):
@@ -8,40 +7,62 @@ class SocialComment(models.TransientModel):
     _description = 'Comment from Social Accounts'
 
     parent_id = fields.Many2one(
-        'marketing.comment', string='Parent Comment',
-        ondelete='cascade', requred=False, readonly=True)
+        'marketing.comment',
+        string='Parent Comment',
+        ondelete='cascade',
+        requred=False,
+        readonly=True
+    )
     parent_social_id = fields.Char(
         string='Comment ID in Social Media',
-        required=False, readonly=True)
-
+        required=False,
+        readonly=True
+    )
     social_id = fields.Char(
         string='Comment ID in Social Media',
-        required=False, readonly=True)
+        required=False,
+        readonly=True
+    )
     message = fields.Char(
-        string='Comment Message', required=True)
+        string='Comment Message',
+        required=True
+    )
     author_id = fields.Char(
         string='Author String Indentificator', 
-        readonly=True, required=False)
+        readonly=True,
+        required=False
+    )
     post_id = fields.Many2one(
-        'marketing.posts', string='Related Post',
-        ondelete='cascade', requred=False, readonly=True)
+        'marketing.posts',
+        string='Related Post',
+        ondelete='cascade',
+        requred=False,
+        readonly=True
+    )
     posted_time = fields.Datetime(
-        string='Posted Time', store=True, readonly=True)
+        string='Posted Time',
+        store=True,
+        readonly=True
+    )
     state = fields.Selection(
         selection=[(item.value, item.name)
                    for item in CommentState],
         readonly=True,
         string='Comment State',
-        default=CommentState.draft.value
+        default=CommentState.draft
     )
-
     has_account_relation = fields.Boolean(
-        string='Is Our Account Comment', default=True,
-        compute='_compute_has_account_relation', store=True)
-
+        string='Is Our Account Comment',
+        compute='_compute_has_account_relation',
+        store=True,
+        default=True,
+    )
     has_lead_comment = fields.Boolean(
-        string='Has Lead Comment', default=False,
-        compute='_compute_has_lead_comment', store=True)
+        string='Has Lead Comment',
+        compute='_compute_has_lead_comment',
+        default=False,
+        store=True
+    )
 
     @api.depends('author_id')
     def _compute_has_account_relation(self):
@@ -70,7 +91,7 @@ class SocialComment(models.TransientModel):
             return self.message[:40]
         return f'Comment with ID = {self.id}'
 
-    def action_create_lead(self) -> None:
+    def action_create_lead(self):
         lead = self.env['crm.lead'].create({
             'name': f'Comment Lead for {self.social_id}',
             'description': f'Comment Message: {self.message}<br/><br/>'\
@@ -125,14 +146,6 @@ class SocialComment(models.TransientModel):
                 'res_id': lead_id.id,
             }
 
-    # def action_load_nested_comments(self) -> None:
-    #     parent_post = self.post_id
-    #     if self.social_id:
-    #         account_object = parent_post._get_one_account_for_post()[0]
-    #         CommentDataSynchronizer(account_object, parent_post.social_id, parent_post.id,
-    #                                 self.env['marketing.comment'],
-    #                                 self.env['marketing.posts']
-    #                                 ).nested_comments_from_account_to_db(self.social_id, self.id)
 
 class LeadComment(models.Model):
     _name = 'marketing.lead.comment'
@@ -140,17 +153,29 @@ class LeadComment(models.Model):
 
     social_id = fields.Char(
         string='Comment ID in Social Media',
-        required=True, readonly=True)
+        required=True,
+        readonly=True,
+    )
     message = fields.Char(
-        string='Comment Message', required=False)
+        string='Comment Message',
+        required=False
+    )
     author_id = fields.Char(
-        string='Author String Indentificator', required=False)
+        string='Author String Indentificator',
+        required=False,
+    )
     post_id = fields.Many2one(
-        'marketing.posts', string='Related Post',
-        ondelete='cascade', requred=False)
+        'marketing.posts',
+        string='Related Post',
+        ondelete='cascade',
+        requred=False,
+    )
     lead_id = fields.Many2one(
-        'crm.lead', string='Related Lead',
-        ondelete='cascade', required=True)
+        'crm.lead',
+        string='Related Lead',
+        ondelete='cascade',
+        required=True
+    )
 
     def __str__(self) -> str:
         return f'Lead Comment: {self.id} - {self.lead_id.id}'
@@ -159,7 +184,6 @@ class LeadComment(models.Model):
         transient_comment = self.env['marketing.comment'].search([
             ('social_id', '=', self.social_id)
         ], limit=1)
-
         transient_comment.write({
             'has_lead_comment': False,
         })
