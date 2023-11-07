@@ -12,12 +12,17 @@ class Accounts(models.Model):
     social_media = fields.Selection(
         selection=[(item.value, item.name)
                    for item in SocialMediaType],
-        string='Account Social Media')
+        string='Account Social Media'
+    )
     id_name = fields.Char(
-        'ID name for account identifying', required=False)
+        required=False,
+        string='ID name for account identifying'
+    )
     social_id = fields.Char(
+        required=False,
+        readonly=False,
         string='Account ID in Social Media',
-        required=False, readonly=False)
+    )
     full_name = fields.Char('Full account name')
 
     post_ids = fields.One2many(
@@ -36,9 +41,6 @@ class Accounts(models.Model):
         ('fb_credentials_id_unique', 'UNIQUE(fb_credentials_id)',
          'Each Account can be linked to only one Facebook credentials.'),
     )
-
-    def __str__(self) -> str:
-        return self.id_name if self.id_name else self.id
 
 
 class FacebookCredentials(models.Model):
