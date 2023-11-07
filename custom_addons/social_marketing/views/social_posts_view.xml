@@ -127,23 +127,23 @@
                             />
                             <button
                                 name="action_finish_later"
-                                string="Finish Later"
+                                string="Save"
                                 type="object"
                                 class="oe_highlight"
                             />
                             <button
-                                name="action_create_post"
+                                name="action_publish_post"
                                 string="Publish Now"
                                 type="object"
                                 class="oe_highlight"
-                                attrs="{'invisible': ['|', ('now_flag', '=', True), ('state', '=', 'posted')]}"
+                                attrs="{'invisible': [('state', '=', 'posted')]}"
                             />
                             <button
                                 name="action_create_post"
                                 string="Schedule"
                                 type="object"
                                 class="oe_highlight"
-                                attrs="{'invisible': [('now_flag', '=', False)]}"
+                                attrs="{'invisible': ['|', ('now_flag', '=', False), ('state', '!=', 'draft')]}"
                             />
                             <button
                                 name="action_update_post"
@@ -188,6 +188,14 @@
                             type='object'
                             class='oe_highlight'
                         />
+                        <!-- <div> -->
+                            <button
+                                name="action_delete_post"
+                                string="Delete Selected Post"
+                                type="object"
+                                class='oe_highlight'
+                            />
+                        <!-- </div> -->
                     </header>
                 </tree>
             </field>
