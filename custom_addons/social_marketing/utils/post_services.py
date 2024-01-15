@@ -26,14 +26,14 @@ from ..custom_types import (
 from ..custom_exceptions import RequestException
 
 
-class PostServiceInterface(ABC):
+class PostServiceInterface(ABC):    
     @abstractmethod
-    def validate_prepare_post_object(self, post_object: PostObject) ->\
-            Dict[FieldName, List[ErrorType]]:
+    def get_post_list_ids(self) -> List[IdType]:
         pass
 
     @abstractmethod
-    def get_post(self, post_social_id: IdType) -> PostObject:
+    def validate_prepare_post_object(self, post_object: PostObject) ->\
+            Dict[FieldName, List[ErrorType]]:
         pass
 
     @abstractmethod
@@ -41,7 +41,11 @@ class PostServiceInterface(ABC):
         pass
 
     @abstractmethod
-    def get_post_list_ids(self) -> List[IdType]:
+    def create_post(self, post_object: PostObject) -> PostType:
+        pass
+
+    @abstractmethod
+    def get_post(self, post_social_id: IdType) -> PostObject:
         pass
 
     @abstractmethod
@@ -57,8 +61,101 @@ class PostServiceInterface(ABC):
         pass
 
 
-
+LINKEDIN_API_VERSION = 'v2'
 GPAPH_API_VERSION = 'v17.0'
+
+
+class LinkedInPostService:
+    API_PREFIX = f'https://api.linkedin.com/{LINKEDIN_API_VERSION}'
+    TEXT_MAX_LENGTH = 8192
+    
+    def __init__(self, credentials: Dict[str, str]) -> None:
+        self._account_urn = credentials['account_urn']
+        self._access_token = credentials['access_token']
+
+    def validate_prepare_post_object(self, post_object: PostObject) ->\
+            Dict[FieldName, List[ErrorType]]:
+        field_errors: Dict[FieldName, List[str]] = dict()
+        if post_object.message:
+            text_error = self._check_text(post_object.message)
+            self._update_errors(text_error, field_errors)
+        return field_errors
+
+    def _check_text(self, text: str) -> Message:
+        if len(text) > self.TEXT_MAX_LENGTH:
+            return Message(
+                success=False,
+                field_name='message',
+                text='Post text too long'
+            )
+        return Message(
+            success=True,
+            field_name='message',
+            text='Post text is correct'
+        )
+
+    def _update_errors(
+            self,
+            message: Message,
+            field_errors: Dict[FieldName, List[str]]
+            ) -> None:
+        if not message.success:
+            if message.field_name not in field_errors:
+                field_errors[message.field_name] = []
+            field_errors[message.field_name].append(message.text)
+
+    def create_post(self, post_object: PostObject) -> PostType:
+        if post_object.image_objects:
+            # TODO: handle image case
+            pass
+        else:
+            response_data = self._create_post_api({
+                'message': post_object.message if post_object.message else '',
+            })
+        return response_data
+
+    def _create_post_api(self, post_data: PostType) -> PostType:
+        url = f'{self.API_PREFIX}/ugcPosts/'
+        headers = {
+            'Authorization': f'Bearer {self._access_token}',
+            'Content-Type': 'application/json',
+        }
+        data = {
+            'author': f'urn:li:{self._account_urn}',
+            'lifecycleState': 'PUBLISHED',
+            'specificContent': {
+                'com.linkedin.ugc.ShareContent': {
+                    'shareCommentary': {
+                        'text': post_data['message']
+                    },
+                    'shareMediaCategory': 'NONE'
+                }
+            },
+            'visibility': {
+                'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+            }
+        }
+        response = requests.post(
+            url=url,
+            headers=headers,
+            json=data,  
+        )
+        response_data = json.loads(response.text)
+        if response_data.get('error'):
+            raise RequestException(response_data['error']['message'])
+        return response_data
+
+    def delete_post(self, post_id: IdType) -> PostType:
+        return self._delete_post_api(post_id)
+
+    def _delete_post_api(self, post_id: IdType) -> PostType:
+        url = f'{self.API_PREFIX}/ugcPosts/{post_id}'
+        headers = {
+            'Authorization': f'Bearer {self._access_token}',
+            'Content-Type': 'application/json',
+        }
+        response = requests.delete(url=url, headers=headers)
+        return {'status': str(response.status_code)}
 
 
 class FBPostService(PostServiceInterface):
