@@ -13,7 +13,23 @@
                                 widget="many2many_checkboxes"
                             />
                             <field name="message"/>
+                            <field name="image_ids_changed"/>
                             <field name="state"/>
+                            <field name="image_ids">
+                                <tree>
+                                    <!-- <field name="social_id"/>
+                                    <field name="name"/>
+                                    <field name="description"/> -->
+                                    <field name="image" string="Media Size"/>
+                                    <field
+                                        name="image"
+                                        widget="image"
+                                        string="Image Preview"
+                                        class="oe_avatar"
+                                        options='{"preview_image": "image"}'
+                                    />
+                                </tree>
+                            </field>
                             <field name="post_ids">
                                 <tree
                                     delete="0"
@@ -29,30 +45,11 @@
                                             <field name="message"/>
                                         </tree>
                                     </field>
-                                    <!-- <field name="likes_qty"/>
-                                    <field name="reposts_qty"/>
-                                    <field name="views_qty"/>
-                                    <field name="comments_qty"/> -->
-                                    <!-- <button
-                                        string="Unpin Post"
-                                        name="action_unpin_post"
-                                        type="object"
-                                        class="oe_highlight"
-                                    /> -->
                                 </tree>
                             </field>
-                            <!-- <field
-                                name="now_flag"
-                                widget="boolean_toggle"
-                                attrs="{'invisible': ['|', ('state', '=', 'posted'), ('state', '=', 'scheduled')]}"
-                            /> -->
-                            <!-- <field
-                                name="schedule_time"
-                                attrs="{'invisible': ['|', ('now_flag', '=', False), ('state', '=', 'posted')]}"
-                            /> -->
                             <field
                                 name="schedule_time"
-                                attrs="{'invisible': [('state', '=', 'posted')]}"
+                                attrs="{'invisible': ['|', ('state', '=', 'posted'), ('state', '=', 'posting')]}"
                             />
                         </group>
                         <div class="oe_form_buttons">
@@ -70,13 +67,6 @@
                                 class="oe_highlight"
                                 attrs="{'invisible': [('id', '=', False)]}"
                             />
-                            <!-- <button
-                                name="action_publish_posts"
-                                string="Publish Now"
-                                type="object"
-                                class="oe_highlight"
-                                attrs="{'invisible': ['|', ('post_ids', '=', []), ('now_flag', '=', True)]}"
-                            /> -->
                             <button
                                 name="action_publish_posts"
                                 string="Publish Now"
@@ -84,20 +74,6 @@
                                 class="oe_highlight"
                                 attrs="{'invisible': ['|', ('post_ids', '=', []), ('state', '=', 'posted')]}"
                             />
-                            <!-- <button
-                                name="action_publish_posts"
-                                string="Schedule"
-                                type="object"
-                                class="oe_highlight"
-                                attrs="{'invisible': ['|', ('now_flag', '=', False), ('state', '=', 'scheduled')]}"
-                            /> -->
-                            <!-- <button
-                                name="action_schedule_posts"
-                                string="Schedule"
-                                type="object"
-                                class="oe_highlight"
-                                attrs="{'invisible': [('post_ids', '=', [])]}"
-                            /> -->
                         </div>
                     </sheet>
                 </form>
