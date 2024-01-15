@@ -72,13 +72,9 @@ class StatGroup(models.Model):
             stat_group.account_ids = [(6, 0, account_ids)]
 
     def action_update_data(self):
-        post_sync = PostSynchronizer(
-            self.env['marketing.image'],
-            self.env['marketing.posts'],
-            self.env['marketing.stat.groups']
-        )
-        posted_post_ids = self.env['marketing.posts'].search([
+        post_sync = PostSynchronizer(self.env)
+        posted_post_records = self.env['marketing.posts'].search([
             ('state', '=', PostState.posted),
             ('stat_group_id', '=', self.id),
         ])
-        post_sync.update_post_list_acc_to_db(posted_post_ids)
+        post_sync.update_post_list_acc_to_db(posted_post_records)
