@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import (
     List,
+    Optional,
     Dict,
     Any,
 )
@@ -38,6 +39,18 @@ class AggregatedPost(models.Model):
         string='Related Posts',
         readonly=True
     )
+    image_ids = fields.One2many(
+        'marketing.image',
+        'aggregated_post_id',
+        string='Aggregated Post Images',
+        required=False
+    )
+    image_ids_changed = fields.Boolean(
+        string='Image IDs Changed',
+        default=False,
+        compute='_compute_image_ids_changed',
+        store=True
+    )
     state = fields.Selection(
         selection=[(item.value, item.name)
                     for item in PostState],
@@ -52,6 +65,12 @@ class AggregatedPost(models.Model):
         required=False,
         default=False,
     )
+
+    @api.depends('image_ids')
+    def _compute_image_ids_changed(self):
+        for agg_post in self:
+            if agg_post.state == PostState.posted:
+                agg_post.image_ids_changed = True
 
     @api.onchange('schedule_time')
     def _onchange_schedule_time(self):
@@ -88,6 +107,7 @@ class AggregatedPost(models.Model):
                 self._update_non_published_post(post)
             else:
                 self._update_published_post(post)
+        self.image_ids_changed = False
 
     def _initialize_posts_for_new_accs(self):
         for account in self.account_ids:
@@ -100,6 +120,13 @@ class AggregatedPost(models.Model):
                     'message': self.message,
                     'aggregated_post_id': self.id,
                 })
+                for image_record in self.image_ids:
+                    image_record.copy(
+                        {
+                            'post_id': new_post.id,
+                            'aggregated_post_id': None,
+                        }
+                    )
                 if self.schedule_time:
                     new_post.write({
                         'now_flag': False,
@@ -107,6 +134,7 @@ class AggregatedPost(models.Model):
                         'schedule_time': self.schedule_time
                     })
                     new_post.create_schedule_task()
+                new_post.image_ids = [(6, 0, new_post.image_ids.ids)]
                 self.post_ids += new_post
 
     def _update_non_published_post(self, post: 'SocialPosts'):
@@ -117,6 +145,15 @@ class AggregatedPost(models.Model):
                 post.write({
                     'message': self.message,
                 })
+            post.image_ids.unlink()
+            for image_record in self.image_ids:
+                image_record.copy(
+                    {
+                        'post_id': post.id,
+                        'aggregated_post_id': None,
+                    }
+                )
+            post.image_ids = [(6, 0, post.image_ids.ids)]
 
             if not post.schedule_time and self.schedule_time:
                 post.write({
@@ -137,13 +174,25 @@ class AggregatedPost(models.Model):
                     'schedule_time': self.schedule_time,
                 })
 
-    def _update_published_post(self: 'AggregatedPost',
-                               post: 'SocialPosts'):
+    def _update_published_post(
+            self: 'AggregatedPost',
+            post: 'SocialPosts'
+            ) -> None:
+        if self.image_ids_changed:
+            post.image_ids.unlink()
+            for image_record in self.image_ids:
+                image_record.copy(
+                    {
+                        'post_id': post.id,
+                        'aggregated_post_id': None,
+                    }
+                )
+            post.image_ids = [(6, 0, post.image_ids.ids)]
         if post.message != self.message:
             post.write({
                 'message': self.message,
             })
-            post.action_update_post()
+        post.action_update_post()
 
     def action_publish_posts(self):
         for post in self.post_ids:
@@ -175,7 +224,6 @@ class SocialPosts(models.Model):
     )
     posted_time = fields.Datetime(
         string='Posted Time',
-        # compute='_compute_posted_time',
         store=True,
         readonly=True,
     )
@@ -206,8 +254,6 @@ class SocialPosts(models.Model):
         default=0,
         readonly=True
     )
-    # changed = fields.Boolean(
-    #     string='Is Synced?', default=True, readonly=True)
     account_id = fields.Many2one(
         'marketing.accounts',
         string='Related Account',
@@ -255,8 +301,13 @@ class SocialPosts(models.Model):
 
     now_flag = fields.Boolean(string='Schedule', store=True)
 
+    def action_update_statistics(self) -> None:
+        post_sync = PostSynchronizer(self.env)
+        post_records = self.env['marketing.posts'].search([])
+        post_sync.update_post_statistics(post_records)
+
     def get_social_ids_from_images(self) -> List[IdType]:
-        social_ids: List[IdType] = []
+        social_ids: List[IdType] = list()
         for post in self:
             for image in post.image_ids:
                 if image.social_id:
@@ -298,16 +349,82 @@ class SocialPosts(models.Model):
                 'aggregated_post_id': False,
             })
 
+# ---------------- CREATE ------------------
     def action_publish_post(self):
-        if self.state in (PostState.draft,
-                          PostState.failed):
-            self.action_create_post()
-        elif self.state == PostState.scheduled:
-            self.action_create_post()
-            self.scheduled_action_id.unlink()
+        if self.state not in (PostState.posted,
+                              PostState.posting):
+            if self.state == PostState.scheduled:
+                self.scheduled_action_id.unlink()
+                self.write({
+                    'scheduled_time': False,
+                })
             self.write({
-                'schedule_time': False,
+                'state': PostState.posting,
             })
+            self._create_task_for_creation()
+
+    def _create_task_for_creation(self) -> None:
+        self.__create_task(
+            f'Task For Post Creation {self.id}',
+            f'model._create_post_by_id({self.id})',
+        )
+
+    def _create_post_by_id(self, post_id: IdType):
+        post_record = self.env['marketing.posts'].search([
+            ('id', '=', post_id)
+        ])
+        if not post_record.social_id:
+            post_sync = PostSynchronizer(self.env)
+            post_sync.create_one_post_db_to_acc(post_record)
+
+    def action_create_post(self):
+        if not self.social_id:
+            post_sync = PostSynchronizer(self.env)
+            post_sync.create_one_post_db_to_acc(self)
+
+# ---------------- UPDATE ------------------
+    def action_update_post(self):
+        if self.social_id:
+            self.write({
+                'state': PostState.updating,
+            })
+            self._create_task_for_updating()
+
+    def _create_task_for_updating(self) -> None:
+        self.__create_task(
+            f'Task For Updating Post {self.id}',
+            f'model._update_post_by_id({self.id})',
+        )
+
+    def _update_post_by_id(self, post_id: IdType):
+        post_record = self.env['marketing.posts'].search([
+            ('id', '=', post_id)
+        ])
+        post_sync = PostSynchronizer(self.env)
+        post_sync.update_one_post_db_to_acc(post_record)
+
+# ---------------- DELETE ------------------
+    def action_delete_post(self):
+        for post_record in self:
+            if post_record.social_id:
+                post_record.write({
+                    'state': PostState.deleting,
+                })
+                post_record._create_task_for_deletion()
+
+    def _create_task_for_deletion(self) -> None:
+        self.__create_task(
+            f'Task For Deletion Post {self.id}',
+            f'model._delete_post_by_id({self.id})',
+        )
+
+    def _delete_post_by_id(self, post_id: IdType):
+        post_record = self.env['marketing.posts'].search([
+            ('id', '=', post_id)
+        ])
+        post_sync = PostSynchronizer(self.env)
+        post_sync.delete_one_post_db_to_acc(post_record)
+        post_record.unlink()
 
     def action_pull_comments(self):
         if self.social_id:
@@ -316,8 +433,7 @@ class SocialPosts(models.Model):
                 account_object,
                 self.social_id,
                 self.id,
-                self.env['marketing.comment'],
-                self.env['marketing.posts']
+                self.env,
             ).comments_from_account_to_db()
 
     def action_push_comments(self):
@@ -327,44 +443,8 @@ class SocialPosts(models.Model):
                 account_object,
                 self.social_id,
                 self.id,
-                self.env['marketing.comment'],
-                self.env['marketing.posts'],
-                self.env['crm.lead'],
+                self.env,
             ).comments_from_db_to_accounts()
-
-    def action_update_post(self):
-        if self.social_id:
-            post_sync = PostSynchronizer(
-                self.env['marketing.image'],
-                self.env['marketing.posts'],
-                self.env['marketing.stat.groups'],
-            )
-            post_sync.update_one_post_db_to_acc(self)
-
-    def action_create_post(self):
-        if not self.social_id:
-            post_sync = PostSynchronizer(
-                self.env['marketing.image'],
-                self.env['marketing.posts'],
-                self.env['marketing.stat.groups'],
-            )
-            post_sync.create_one_post_db_to_acc(self)
-
-    def action_delete_post(self):
-        if self.social_id:
-            post_sync = PostSynchronizer(
-                self.env['marketing.image'],
-                self.env['marketing.posts'],
-                self.env['marketing.stat.groups'],
-            )
-            post_sync.delete_one_post_db_to_acc(self)
-            self.unlink()
-
-    def _create_post_by_id(self, post_id: IdType):
-        post_object = self.env['marketing.posts'].search([
-            ('id', '=', post_id)
-        ])
-        post_object.action_create_post()
 
     def _get_one_account_for_post(self) -> List[AccountObject]:
         acc = self.account_id
@@ -402,42 +482,55 @@ class SocialPosts(models.Model):
             account_list.append(acc_obj)
         return account_list
 
-    def from_accounts_to_db(self) -> None:
-        account_records = self.env['marketing.accounts'].search([])
-        PostSynchronizer(
-            self.env['marketing.image'],
-            self.env['marketing.posts'],
-            self.env['marketing.stat.groups'],
-        ).from_accounts_to_db(account_records)
+    def pull_posts(self) -> None:
+        account_db_ids = self.env['marketing.accounts'].search([]).ids
+        account_records = self.env['marketing.accounts'].browse(account_db_ids)
+        PostSynchronizer(self.env).\
+            from_accounts_to_db(account_records)
 
-    def from_db_to_accounts(self) -> None:
+    def push_posts(self) -> None:
         account_records = self.env['marketing.accounts'].search([])
-        PostSynchronizer(
-            self.env['marketing.image'],
-            self.env['marketing.posts'],
-            self.env['marketing.stat.groups'],
-        ).from_db_to_accounts(account_records)
+        PostSynchronizer(self.env).\
+            from_db_to_accounts(account_records)
 
     def create_schedule_task(self) -> None:
         if self.schedule_time:
-            scheduled_action = self.env['ir.cron'].create({
-                'name': f'Scheduled Post Action for Post {self.id}',
-                'model_id': self.env['ir.model'].search([('model', '=', 'marketing.posts')]).id,
-                'state': 'code',
-                'code': f'model._create_post_by_id({self.id})',
-                'interval_number': 1,
-                'interval_type': 'minutes',
-                'nextcall': self.schedule_time,
-                'numbercall': 1,
-                'doall': False,
-                'active': True,
-            })
+            scheduled_action = self.__create_task(
+                f'Scheduled Post Action for Post {self.id}',
+                f'model._create_post_by_id({self.id})',
+                None,
+                self.schedule_time,
+            )
             self.write({
                 'scheduled_action_id': scheduled_action.id,
             })
         else:
             raise ValidationError('Have no schedule time')
 
+    def __create_task(
+            self,
+            task_name: str,
+            method_code: str,
+            model_id: Optional[IdType] = None,
+            call_time: datetime = datetime.now()
+            ):
+        if not model_id:
+            model_id = self.env['ir.model'].\
+                search([('model', '=', 'marketing.posts')]).id
+
+        return self.env['ir.cron'].create({
+            'name': task_name,
+            'model_id': model_id,
+            'state': 'code',
+            'code': method_code,
+            'interval_number': 1,
+            'interval_type': 'minutes',
+            'nextcall': call_time,
+            'numbercall': 1,
+            'doall': False,
+            'active': True,
+        })
+    
     def write(self, values: Dict[FieldName, Any]):
         if 'schedule_time' in values and self.scheduled_action_id:
             new_schedule_time_str = values.get('schedule_time')
