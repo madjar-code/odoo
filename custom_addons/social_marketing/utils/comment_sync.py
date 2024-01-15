@@ -24,17 +24,21 @@ UPDATE_FIELDS = {
 
 
 class CommentSynchronizer:
-    def __init__(self,
-                 account_object: AccountObject,
-                 post_social_id: IdType, post_id: IdType,
-                 comment_table, post_table, lead_table = None) -> None:
+    def __init__(
+            self,
+            account_object: AccountObject,
+            post_social_id: IdType,
+            post_id: IdType,
+            env,
+            ) -> None:
         self.account_object = account_object
         self._post_social_id = post_social_id
         self._post_id = post_id
 
-        self._comment_table = comment_table
-        self._post_table = post_table
-        self._lead_table = lead_table
+        self.env = env
+        self._comment_table = self.env['marketing.comment']
+        self._post_table = self.env['marketing.posts']
+        self._lead_table = self.env['crm.lead']
 
     def comments_from_account_to_db(self) -> None:
         existing_social_ids: List[IdType] = self._get_all_social_ids()
