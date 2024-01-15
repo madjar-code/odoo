@@ -13,6 +13,7 @@
                             <field name="social_id"/>
                             <field name="full_name"/>
                             <field name="fb_credentials_id"/>
+                            <field name="li_credentials_id"/>
                         </group>
                     </sheet>
                 </form>
@@ -23,11 +24,19 @@
             <field name="name">marketing.accounts.posts.tree</field>
             <field name="model">marketing.accounts</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree delete="false">
                     <field name="social_media"/>
                     <field name="id_name"/>
                     <field name="social_id"/>
                     <field name="full_name"/>
+                    <button
+                        string="Delete"
+                        type="object"
+                        class="oe_highlight"
+                        confirm="Are you sure you want to delete this account?"
+                        icon="fa-trash-o"
+                        name="unlink"
+                    />
                 </tree>
             </field>
         </record>
@@ -83,8 +92,6 @@
                                 class="oe_highlight"
                                 attrs="{'invisible': [('state', '!=', 'posted')]}"
                             />
-                            <!-- <button name='action_update_post_comments' string='Update Comments' type='object'
-                                    class='oe_highlight' attrs="{'invisible': [('state', '!=', 'posted')]}"/> -->
                         </group>
                         <group>
                             <field name="comment_ids" widget="one2many_list"
@@ -98,9 +105,6 @@
                                     <field name="posted_time" invisible="1"/>
                                     <field name="has_lead_comment"/>
                                     <field name="has_account_relation"/>
-                                    <!-- <button string="Nested"
-                                            name="action_load_nested_comments"
-                                            type="object" class="oe_highlight"/> -->
                                     <button
                                         string="Create Lead"
                                         name="action_create_lead"
@@ -136,7 +140,7 @@
                                 string="Publish Now"
                                 type="object"
                                 class="oe_highlight"
-                                attrs="{'invisible': [('state', '=', 'posted')]}"
+                                attrs="{'invisible': ['|', ('state', '=', 'posted'), ('state', '=', 'posting')]}"
                             />
                             <button
                                 name="action_create_post"
@@ -173,29 +177,26 @@
                     <field name="reposts_qty"/>
                     <field name="views_qty"/>
                     <field name="comments_qty"/>
-                    <!-- <field name="changed"/> -->
                     <field name="image_ids"/>
                     <header>
                         <button
-                            name='from_accounts_to_db'
+                            name='pull_posts'
                             string='Pull Posts'
                             type='object'
                             class='oe_highlight'
                         />
                         <button
-                            name='from_db_to_accounts'
+                            name='push_posts'
                             string='Push Posts'
                             type='object'
                             class='oe_highlight'
                         />
-                        <!-- <div> -->
-                            <button
-                                name="action_delete_post"
-                                string="Delete Selected Post"
-                                type="object"
-                                class='oe_highlight'
-                            />
-                        <!-- </div> -->
+                        <button
+                            name="action_delete_post"
+                            string="Delete Selected Post"
+                            type="object"
+                            class='oe_highlight'
+                        />
                     </header>
                 </tree>
             </field>
