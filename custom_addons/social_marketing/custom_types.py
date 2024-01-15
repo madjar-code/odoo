@@ -31,10 +31,12 @@ class PostState(str, Enum):
     scheduled = 'scheduled'
     posting = 'posting'
     posted = 'posted'
+    updating = 'updating'
+    deleting = 'deleting'
     failed = 'failed'
     mixed = 'mixed'
 
-    
+
 class CommentState(str, Enum):
     draft = 'draft'
     posting = 'posting'
