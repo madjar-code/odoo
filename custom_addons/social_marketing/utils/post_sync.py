@@ -6,13 +6,16 @@ from typing import (
     Tuple,
     List,
     Dict,
-    Set,
     Any,
 )
 from odoo.models import fields
+from odoo.exceptions import (
+    UserError,
+)
 from .post_services import (
     PostServiceInterface,
     FBPostService,
+    LinkedInPostService,
 )
 from ..models.accounts import Accounts
 from ..custom_types import (
@@ -45,22 +48,33 @@ class PostRouter:
                 'access_token': acc.fb_credentials_id.access_token,
                 'page_id': acc.fb_credentials_id.page_id,
             }
+        elif self._media_type == 'LinkedIn':
+            return {
+                'access_token': acc.li_credentials_id.access_token,
+                'account_urn': acc.li_credentials_id.account_urn
+            }
 
     @property
     def service(self) -> PostServiceInterface:
         if self._media_type == 'Facebook':
             return FBPostService(self.credentials)
+        elif self._media_type == 'LinkedIn':
+            return LinkedInPostService(self.credentials)
 
 
 class PostSynchronizer:
-    def __init__(self, image_table, post_table, group_table) -> None:
-        self._image_table = image_table
-        self._post_table = post_table
-        self._group_table = group_table
+    def __init__(self, env) -> None:
+        self.env = env
+        self._image_table = self.env['marketing.image']
+        self._post_table = self.env['marketing.posts']
+        self._group_table = self.env['marketing.stat.groups']
 
     def from_db_to_accounts(self, account_records) -> None:
-        self.create_new_posts_db_to_acc()
-        self.delete_old_posts_db_to_acc(account_records)
+        try:
+            self.create_new_posts_db_to_acc()
+            self.delete_old_posts_db_to_acc(account_records)
+        except Exception as e:
+            print(e)
 
     def create_new_posts_db_to_acc(self) -> None:
         non_existent_posts = self._post_table.search([
@@ -91,17 +105,20 @@ class PostSynchronizer:
 
         for account_record in account_records:
             service = PostRouter(account_record).service
-            post_objects = service.get_post_list()
-            for post_object in post_objects:
-                if post_object.social_id not in existing_social_ids:
-                    self._create_non_existent_post(
-                        post_object,
-                        account_record.id
-                    )
-                else:
-                    self._update_existing_post(post_object)
-                new_social_ids.append(post_object.social_id)
-        self._delete_non_existent_posts(existing_social_ids, new_social_ids)
+            try:
+                post_objects = service.get_post_list()
+                for post_object in post_objects:
+                    if post_object.social_id not in existing_social_ids:
+                        self._create_non_existent_post(
+                            post_object,
+                            account_record.id
+                        )
+                    else:
+                        self._update_existing_post(post_object)
+                    new_social_ids.append(post_object.social_id)
+            except Exception as e:
+                print(e)
+        # self._delete_non_existent_posts(existing_social_ids, new_social_ids)
 
     def _create_non_existent_post(self, post_object: PostObject,
                                   account_id: IdType) -> None:
@@ -212,7 +229,7 @@ class PostSynchronizer:
             post_record.write({
                 'state': PostState.failed,
             })
-            print(post_errors)
+            raise UserError(str(post_errors))
 
     def update_one_post_db_to_acc(self, post_record) -> None:
         try:
@@ -271,6 +288,32 @@ class PostSynchronizer:
                 )
             image_objects.append(image_object)
         return image_objects
+
+    def update_post_statistics(self, post_records) -> None:
+        for post_record in post_records:
+            account_record = post_record.account_id
+            service = PostRouter(account_record).service
+            try:
+                post_object: PostObject = service.get_post(post_record.social_id)
+            except Exception as e:
+                print(e)
+                continue
+            self._update_post_statistics(post_object)
+
+    def _update_post_statistics(self, post_object: PostObject) -> None:
+        try:
+            existing_post = self._post_table.search([
+                ('social_id', '=', post_object.social_id)
+            ])
+            update_values: Dict[FieldName, Any] = {
+                field_db: getattr(post_object, field_db)
+                for field_db, field_api in UPDATE_FIELDS.items()
+                if getattr(existing_post, field_db) != getattr(post_object, field_api)
+            }
+            if update_values:
+                existing_post.write(update_values)
+        except Exception as e:
+            print(e)
 
     def update_post_list_acc_to_db(self, post_list) -> None:
         for post_record in post_list:
