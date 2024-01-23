@@ -8,3 +8,4 @@ access_marketing_comment,marketing.comment,model_marketing_comment,base.group_us
 access_marketing_lead_comment,marketing.lead.comment,model_marketing_lead_comment,base.group_user,1,1,1,1
 access_marketing_stat_group,marketing.stat.groups,model_marketing_stat_groups,base.group_user,1,1,1,1
 access_li_credentials,marketing.li.credentials,model_marketing_li_credentials,base.group_user,1,1,1,1
+access_inst_credentials,marketing.inst.credentials,model_marketing_inst_credentials,base.group_user,1,1,1,1
