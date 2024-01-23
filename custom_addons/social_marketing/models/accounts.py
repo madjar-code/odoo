@@ -31,6 +31,12 @@ class Accounts(models.Model):
         string='Related Account Posts'
     )
 
+    inst_credentials_id = fields.Many2one(
+        'marketing.inst.credentials',
+        string='Instagram Related Credentials Data',
+        ondelete='cascade',
+        required=False,
+    )
     fb_credentials_id = fields.Many2one(
         'marketing.fb.credentials',
         string='Facebook Related Credentials Data',
@@ -44,12 +50,22 @@ class Accounts(models.Model):
         required=False
     )
     _sql_constraints = (
-        ('fb_credentials_id_unique', 'UNIQUE(fb_credentials_id)',
-         'Each Account can be linked to only one Facebook credentials.'),
-        ('li_credentials_id_unique', 'UNIQUE(li_credentials_id)',
-         'Each Account can be linked to only one LinkedIn credentials.'),
+        (
+            'fb_credentials_id_unique',
+            'UNIQUE(fb_credentials_id)',
+            'Each Account can be linked to only one Facebook credentials.'
+        ),
+        (
+            'inst_credentials_id_unique',
+            'UNIQUE(inst_credentials_id)',
+            'Each Account can be linked to only one Instagram credentials.'
+        ),
+        (
+            'li_credentials_id_unique',
+            'UNIQUE(li_credentials_id)',
+            'Each Account can be linked to only one LinkedIn credentials.'
+        ),
     )
-
 
 
 class FacebookCredentials(models.Model):
@@ -61,6 +77,19 @@ class FacebookCredentials(models.Model):
     account_id = fields.One2many(
         'marketing.accounts',
         'fb_credentials_id',
+        string='Related Account'
+    )
+
+
+class InstagramCredentials(models.Model):
+    _name = 'marketing.inst.credentials'
+
+    access_token = fields.Char(string='Inst Access Token')
+    page_id = fields.Char(string='Instagram Page ID')
+    
+    account_id = fields.One2many(
+        'marketing.accounts',
+        'inst_credentials_id',
         string='Related Account'
     )
 
