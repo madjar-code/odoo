@@ -361,7 +361,8 @@ class SocialPosts(models.Model):
             self.write({
                 'state': PostState.posting,
             })
-            self._create_task_for_creation()
+            self._create_post_by_id(self.id)
+            # self._create_task_for_creation()
 
     def _create_task_for_creation(self) -> None:
         self.__create_task(
@@ -454,6 +455,12 @@ class SocialPosts(models.Model):
                 'access_token': acc.fb_credentials_id.access_token,
                 'page_id': acc.fb_credentials_id.page_id,
             }
+        elif acc.social_media == 'Instagram':
+            credentials = {
+                'access_token': acc.inst_credentials_id.access_token,
+                'page_id': acc.inst_credentials_id.page_id,
+            }
+
         account_object = AccountObject(
             acc.id,
             None,
@@ -471,6 +478,11 @@ class SocialPosts(models.Model):
                 credentials: Dict[str, str] = {
                     'access_token': acc.fb_credentials_id.access_token,
                     'page_id': acc.fb_credentials_id.page_id,
+                }
+            elif acc.social_media == 'Instagram':
+                credentials: Dict[str, str] = {
+                    'access_token': acc.inst_credentials_id.access_token,
+                    'page_id': acc.inst_credentials_id.page_id,
                 }
             acc_obj = AccountObject(
                 acc.id,
@@ -530,7 +542,7 @@ class SocialPosts(models.Model):
             'doall': False,
             'active': True,
         })
-    
+
     def write(self, values: Dict[FieldName, Any]):
         if 'schedule_time' in values and self.scheduled_action_id:
             new_schedule_time_str = values.get('schedule_time')
