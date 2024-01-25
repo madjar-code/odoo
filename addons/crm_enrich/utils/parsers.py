@@ -117,7 +117,6 @@ class WebsitePageParser:
         if response.status_code == HTTPStatus.OK:
             self._soup = BeautifulSoup(response.text, WEBSITE_PARSER)
         else:
-            # print(f'\n\n{response.status_code}\n\n')
             raise ValueError(f"Invalid URL: {self._url}. Status code: {response.status_code}")
         self._social_regex = r'(' + '|'.join(SOCIAL_NETWORKS) + r')'
 
@@ -162,7 +161,7 @@ class WebsitePageParser:
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
         options = uc.ChromeOptions()
-        # options.add_argument('--headless')
+        options.add_argument('--headless')
         user_agent = random.choice(USER_AGENTS)
         options.add_argument(f'user-agent={user_agent}')
         self.browser = uc.Chrome(
@@ -315,12 +314,12 @@ class PersonalFacebookParser(FacebookParser):
             'Email': None,
             'Social Links': set(),
         }
-    
+
         SOCIAL_LINKS = {
             'Instagram': 'https://instagram.com/',
             'LinkedIn': 'https://linkedin.com/in/',
         }
-    
+
         for i, text in enumerate(text_list):
             if text in result:
                 result[text] = text_list[i-1]

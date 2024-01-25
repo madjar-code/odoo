@@ -50,7 +50,6 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
             site_names=home_page_parser.get_site_names()
         )
     except Exception as e:
-        print(f'\n\n{e}\n\n')
         print('Problem with home page URL')
 
     contact_page_data = None
@@ -64,7 +63,6 @@ def get_data_from_website(url_prefix: HttpUrl, home_url: HttpUrl)\
                 site_names=contact_page_parser.get_site_names()
             )
         except Exception as e:
-            print(f'\n\n{e}\n\n')
             print('Problem with contact page URL')
 
     return {
