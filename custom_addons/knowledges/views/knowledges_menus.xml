@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<odoo>
+    <menuitem
+        id="knowledges_menu"
+        name="Knowledges"
+        sequence="23"
+        web_icon="True"
+    />
+
+    <record
+        id="action_knowledges"
+        model="ir.actions.act_window"
+    >
+        <field name="name">Knowledges</field>
+        <field name="context">{'search_default_trash': 1}</field>
+        <field name="res_model">knowledges.item</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="knowledges_feed_menu"
+        name="Search"
+        parent="knowledges_menu"
+        action="action_knowledges"
+    />
+</odoo>
