@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <record id="view_knowledge_item_form" model="ir.ui.view">
+            <field name="name">knowledges.item.form</field>
+            <field name="model">knowledges.item</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field
+                            name="title"
+                            nolabel="1"
+                            placeholder="Enter Title"
+                        />
+                        <field
+                            name="body"
+                            widget="html"
+                            nolabel="1"
+                            placeholder="Enter Body"
+                        />
+                        <field
+                            name="author_id"
+                            readonly="1"
+                            widget="hidden"
+                        />
+                        <field name="state" readonly="1"/>
+                        <field name="category_id"/>
+
+                        <field name="shareable_link" readonly="1" placeholder="Shareable Link"/>
+                        <button string="Generate Shareable Link" type="object" class="oe_highlight" name="action_generate_link"/>
+                    </group>
+                    <button
+                        string="Publish"
+                        class="oe_highlight"
+                        type="object"
+                        name="action_publish"
+                        attrs="{'invisible': [('state', '=', 'published')]}"
+                    />
+                    <button
+                        string="Move to Trash"
+                        class="oe_highlight"
+                        type="object"
+                        name="action_move_to_trash"
+                        attrs="{'invisible': [('state', '=', 'deactivated')]}"
+                    />
+                    <button
+                        string="Save"
+                        class="oe_highlight"
+                        type="object"
+                        name="action_save"
+                    />
+                </form>
+            </field>
+        </record>
+
+        <record id="view_knowledge_item_tree" model="ir.ui.view">
+            <field name="name">knowledges.item.tree</field>
+            <field name="model">knowledges.item</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="title"/>
+                    <field name="category_id"/>
+                    <field name="author_id"/>
+                    <field name="parent_id"/>
+                    <field name="state"/>
+                    <field name="create_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="knowledge_items_search" model="ir.ui.view">
+            <field name="name">knowledges.item.search</field>
+            <field name="model">knowledges.item</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="title"/>
+                    <field name="create_date"/>
+                    <filter
+                        string="Active"
+                        name="active"
+                        domain="[('state', '!=', 'deactivated')]"
+                        help="Show all articles"
+                    />
+                    <filter
+                        string="Draft"
+                        name="draft"
+                        domain="[('state', '=', 'draft')]"
+                        help="Show all draft articles"
+                    />
+                    <filter
+                        string="Published"
+                        name="published"
+                        domain="[('state', '=', 'published')]"
+                        help="Show all published articles"
+                    />
+                    <separator/>
+                    <filter
+                        string="Trash"
+                        name="trash"
+                        domain="[('state', '=', 'deactivated')]"
+                        help="Show articles in trash"
+                    />
+                </search>
+            </field>
+        </record>
+    </data>
+</odoo>
