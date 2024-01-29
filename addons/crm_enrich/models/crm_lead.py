@@ -79,7 +79,11 @@ class Lead(models.Model):
                         lead = self.env['crm.lead'].search([
                             ('id', '=', lead.id)
                         ])
-                        self._create_task_for_enrich(lead.id, normalized_email)
+                        # self._create_task_for_enrich(lead.id, normalized_email)
+                        self._enrich_lead_by_id(
+                            lead_id=lead.id,
+                            email=normalized_email
+                        )
                 except OperationalError:
                     _logger.error('A batch of leads could not be enriched :%s', repr(leads))
                     continue

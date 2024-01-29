@@ -25,6 +25,7 @@ from http import HTTPStatus
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import undetected_chromedriver as uc
+from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
@@ -160,13 +161,23 @@ class WebsitePageParser:
 
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
-        options = uc.ChromeOptions()
-        options.add_argument('--headless')
-        user_agent = random.choice(USER_AGENTS)
-        options.add_argument(f'user-agent={user_agent}')
-        self.browser = uc.Chrome(
-            options=options
-        )
+        from selenium import webdriver
+        import chromedriver_autoinstaller
+
+        chromedriver_autoinstaller.install()
+
+        # options = uc.ChromeOptions()
+        # options.headless = False
+        # user_agent = random.choice(USER_AGENTS)
+        # options.add_argument(f'user-agent={user_agent}')
+        # self.browser = uc.Chrome(options=options)
+        
+        # options = webdriver.ChromeOptions()
+        # user_agent = random.choice(USER_AGENTS)
+        # # options.add_argument('--headless')
+        # options.add_argument(f'user-agent={user_agent}')
+        self.browser = webdriver.Chrome()
+        
         self.browser.get(LINKEDIN_LOGIN_URL)
         self.linkedin_url = linkedin_url
         try:
@@ -182,7 +193,6 @@ class LinkedInEnrichParser:
             self._linkedin_login()
             with open('cookies/linkedin_cookies.pkl', 'wb') as cookies_file:
                 pickle.dump(self.browser.get_cookies(), cookies_file)
-
         self.browser.get(linkedin_url)
         src = self.browser.page_source
         self.soup = BeautifulSoup(src, LINKEDIN_PARSER)
