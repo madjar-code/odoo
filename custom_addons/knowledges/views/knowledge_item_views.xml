@@ -13,6 +13,12 @@
                             placeholder="Enter Title"
                         />
                         <field
+                            name="icon"
+                            widget="image"
+                            class="oe_avatar"
+                            options='{"preview_image": "icon"}'
+                        />
+                        <field
                             name="body"
                             widget="html"
                             nolabel="1"
@@ -23,6 +29,7 @@
                             readonly="1"
                             widget="hidden"
                         />
+                        <field name="editor_ids"/>
                         <field name="state" readonly="1"/>
                         <field name="category_id"/>
 
@@ -59,6 +66,10 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="title"/>
+                    <field
+                        name="icon"
+                        class="oe_avatar"
+                    />
                     <field name="category_id"/>
                     <field name="author_id"/>
                     <field name="parent_id"/>
@@ -100,6 +111,18 @@
                         domain="[('state', '=', 'deactivated')]"
                         help="Show articles in trash"
                     />
+                    <group expand="0" string="Group By">
+                        <filter
+                            string="Category"
+                            name="category"
+                            context="{'group_by':'category_id'}"
+                        />
+                        <filter
+                            string="Author"
+                            name="author"
+                            context="{'group_by':'author_id'}"
+                        />
+                    </group>
                 </search>
             </field>
         </record>
