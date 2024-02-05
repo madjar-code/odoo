@@ -60,3 +60,6 @@ enrich_private.py
 emails_and_websites.txt
 cookies/
 screens/
+
+# help data
+custom_addons/knowledges/helper/*
