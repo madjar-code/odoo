@@ -1,3 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_knowledges_item,knowledges.item,model_knowledges_item,base.group_user,1,1,1,1
-access_knowledges_category,knowledges.category,model_knowledges_category,base.group_user,1,1,1,1
+access_knowledges_item,knowledges.item,model_knowledges_item,base.group_user,1,0,0,0
+access_knowledges_category,knowledges.category,model_knowledges_category,base.group_user,1,0,0,0
+access_knowledges_item_admin,knowledges.item_admin,model_knowledges_item,knowledges.group_knowledges_admin,1,1,1,1
+access_knowledges_item_editor,knowledges.item_editor,model_knowledges_item,knowledges.group_knowledges_editor,1,1,1,1
+access_knowledges_item_viewer,knowledges.item_viewer,model_knowledges_item,knowledges.group_knowledges_viewer,1,0,0,0
