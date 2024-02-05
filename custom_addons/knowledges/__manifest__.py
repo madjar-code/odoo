@@ -9,8 +9,10 @@
         'base',
     ],
     'data': [
+        'data/groups.xml',
         'security/ir.model.access.csv',
-        # 'views/assets.xml',
+        'data/rules.xml',
+        # 'security/ir.model.access.xml',
         'views/knowledges_menus.xml',
         'views/knowledge_item_views.xml',
     ],
