@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <record id='module_category_knowledges' model='ir.module.category'>
+            <field name='name'>Knowledges</field>
+        </record>
+
+        <record id='group_knowledges_admin' model='res.groups'>
+            <field name='name'>Knowledges Admin</field>
+            <field name='category_id' ref='module_category_knowledges'/>
+        </record>
+
+        <record id='group_knowledges_editor' model='res.groups'>
+            <field name='name'>Knowledges Editor</field>
+            <field name='category_id' ref='module_category_knowledges'/>
+        </record>
+
+        <record id='group_knowledges_viewer' model='res.groups'>
+            <field name='name'>Knowledges Viewer</field>
+            <field name='category_id' ref='module_category_knowledges'/>
+        </record>
+    </data>
+</odoo>
