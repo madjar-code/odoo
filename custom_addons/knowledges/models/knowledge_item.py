@@ -31,6 +31,10 @@ class KnowledgeItem(models.Model):
     _rec_names_search = 'title'
     _rec_name = 'title'
 
+    icon = fields.Image(
+        string='Icon',
+        attachment=True
+    )
     title = fields.Char(
         string='Title',
         required=True
@@ -60,13 +64,18 @@ class KnowledgeItem(models.Model):
         default=KnowledgeState.draft,
     )
 
+    editor_ids = fields.Many2many(
+        'res.users',
+        string='Editors',
+    )
+
     shareable_link = fields.Char(
         string='Shareable Link',
         compute='_compute_shareable_link',
         store=True,
         readonly=True,
     )
-    
+
     @api.depends()
     def _compute_shareable_link(self):
         for item in self:
@@ -103,3 +112,24 @@ class KnowledgeItem(models.Model):
             'res_id': self.id,
             'context': self.env.context,
         }
+
+    # @api.model
+    # def create(self, vals):
+    #     record = super(KnowledgeItem, self).create(vals)
+    #     author = record.author_id
+
+    #     group_admin = self.env['res.groups'].search([('name', '=', 'Knowledges Admin')], limit=1)
+    #     if author not in group_admin.users:
+    #         group_editor = self.env['res.groups'].search([('name', '=', 'Knowledges Editor')], limit=1)
+    #         group_viewer = self.env['res.groups'].search([('name', '=', 'Knowledges Viewer')], limit=1)
+
+    #         group_editor_id = group_editor.id if group_editor else False
+    #         group_viewer_id = group_viewer.id if group_viewer else False
+
+    #         group_ids = [
+    #             (4, group_editor_id),
+    #             (4, group_viewer_id)
+    #         ]
+    #         author.write({'groups_id': group_ids})
+
+    #     return record
