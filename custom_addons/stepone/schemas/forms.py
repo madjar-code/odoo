@@ -61,3 +61,27 @@ class BusinessForm(BaseModel):
     time_in_business: int
     message: str
     percent: int = Field(..., ge=0, le=100)
+
+
+class GetQuoteForm(BaseModel):
+    first_name: str
+    company_name: str
+    email: str
+    phone: str
+    
+    description: str
+    size: int
+    weight: int
+
+    origin_address: str
+    origin_zip_code: str
+    origin_city: str
+    origin_state: str
+
+    destination_address: str
+    destination_zip_code: str
+    destination_city: str
+    destination_state: str
+
+    special_service_ids: List[int]
+    pickup_dates: str

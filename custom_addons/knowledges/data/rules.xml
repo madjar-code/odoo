@@ -4,15 +4,12 @@
         <record model="ir.rule" id="rule_article_model_editor_access">
             <field name="name">Knowledge Item: Editor Rules</field>
             <field name="model_id" ref="model_knowledges_item"/>
-            <field name="groups" eval="[(4, ref('knowledges.group_knowledges_editor'))]"/>
-            <field name="domain_force">['|', ('author_id', '=', user.id), ('editor_ids', 'in', [user.id])]</field>
-        </record>
-
-        <record model="ir.rule" id="rule_article_model_viewer_access">
-            <field name="name">Knowledge Item: Viewer Rules</field>
-            <field name="model_id" ref="model_knowledges_item"/>
-            <field name="groups" eval="[(4, ref('knowledges.group_knowledges_viewer'))]"/>
-            <field name="domain_force">[('author_id', '!=', user.id), ('editor_ids', 'not in', [user.id])]</field>
+            <field name="domain_force">['|', ('author_id', '=', user.id), ('editor_ids', 'in', user.id)]</field>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('knowledges.group_knowledges_user'))]"/>
         </record>
     </data>
 </odoo> 

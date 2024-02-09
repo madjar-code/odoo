@@ -20,7 +20,6 @@ from .parsers import (
     SiteURLSearcher,
     WebsitePageParser,
     LinkedInEnrichParser,
-    FacebookParser,
 )
 from .enrich_private import BING_API_KEY
 
@@ -81,16 +80,8 @@ def get_data_from_linkedin(linkedin_url: HttpUrl) -> Dict[str, str]:
         return linkedin_data
     except:
         return None
-
-
-def get_data_from_facebook(facebook_url: HttpUrl) -> Dict[str, Optional[str]]:
-    try:
-        facebook_parser = FacebookParser(facebook_url)
-        facebook_data = facebook_parser.get_about_info()
-        facebook_data['Name'] = facebook_parser.get_title()
-        return facebook_data
-    except:
-        return None
+    finally:
+        linkedin_parser._quit()
 
 
 class AddressData(NamedTuple):
@@ -249,21 +240,6 @@ def aggregate_data(url_prefix: HttpUrl, home_url: HttpUrl) -> TargetDataUnit:
         except Exception:
             address_data = None
 
-    if facebook_url and not linkedin_data:
-        try:
-            facebook_data = get_data_from_facebook(facebook_url)
-            address = facebook_data.get('Address')
-            if facebook_data.get('Name'):
-                facebook_name = facebook_data['Name'].split('\xa0')[0]
-                partner_name = facebook_name
-            if facebook_data.get('Mobile'):
-                phone = facebook_data['Mobile']
-            if facebook_data.get('Email'):
-                email = facebook_data['Email']
-            if address:
-                address_data = process_address_string_by_bing(address)
-        except Exception:
-            address_data = None
     return TargetDataUnit(
         email=email, 
         phone=phone,

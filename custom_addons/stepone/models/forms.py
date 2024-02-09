@@ -87,3 +87,40 @@ class ReviewForm(models.Model):
                    for item in RateChoice],
         string='Rate', required=True,
     )
+
+
+class SpecialService(models.Model):
+    _name = 'get.quote.form.services'
+
+    name = fields.Char()
+    value = fields.Integer()
+
+
+class GetQuoteForm(models.Model):
+    _name = 'get.quote.form'
+    _inherit = 'abstract.form'
+    _description = 'Get A Quote Form'
+
+    first_name = fields.Char()
+    company_name = fields.Char()
+    email = fields.Char()
+    phone = fields.Char()
+    
+    description = fields.Text()
+    size = fields.Integer(string='Size, ft')
+    weight = fields.Integer(string='Weight, lbs')
+
+    origin_address = fields.Text()
+    origin_zip_code = fields.Char()
+    origin_city = fields.Char()
+    origin_state = fields.Char()
+
+    destination_address = fields.Text()
+    destination_zip_code = fields.Char()
+    destination_city = fields.Char()
+    destination_state = fields.Char()
+
+    special_service_ids = fields.Many2many(
+        comodel_name='get.quote.form',
+        relation='get_quote_form_service',
+    )

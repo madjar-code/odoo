@@ -25,6 +25,7 @@ from ..schemas import (
     LeadDefaultContactFormSchema,
     LeadSubscribeFormSchema,
     LeadBusinessFormSchema,
+    LeadGetQuoteFormSchema
 )
 from ..repositories import (
     OdooLeadFormRepository,
@@ -150,3 +151,11 @@ async def create_lead_subscribe(
     ):
     lead_form_repo.create_validate_lead_form(lead_form, env)
     return {'message': 'business form was created!'}
+
+@router.post(f'{API_PREFIX}/get-a-quote/')
+async def create_lead_get_quote(
+        lead_form: LeadGetQuoteFormSchema,
+        env: Annotated[Environment, Depends(odoo_env)],
+    ):
+    lead_form_repo.create_validate_lead_form(lead_form, env)
+    return {'message': 'get a quote form was created!'}

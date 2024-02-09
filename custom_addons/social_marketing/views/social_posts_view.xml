@@ -14,6 +14,7 @@
                             <field name="full_name"/>
                             <field name="fb_credentials_id"/>
                             <field name="li_credentials_id"/>
+                            <field name="inst_credentials_id"/>
                         </group>
                     </sheet>
                 </form>
@@ -96,30 +97,8 @@
                         <group>
                             <field name="comment_ids" widget="one2many_list"
                                     attrs="{'invisible': [('state', '!=', 'posted')]}">
-                                <tree default_order="posted_time" editable="top" sample="1" multi_edit="1">
-                                    <field name="id"/>
-                                    <field name="parent_id"/>
-                                    <field name="message"/>
-                                    <field name="state"/>
-                                    <field name="author_id" invisible="1"/>
-                                    <field name="posted_time" invisible="1"/>
-                                    <field name="has_lead_comment"/>
-                                    <field name="has_account_relation"/>
-                                    <button
-                                        string="Create Lead"
-                                        name="action_create_lead"
-                                        type="object"
-                                        class="oe_highlight"
-                                        attrs="{'invisible': ['|', ('has_lead_comment', '=', True), ('has_account_relation', '=', True)]}"
-                                    />
-                                    <button
-                                        string="Go to Lead"
-                                        name="action_go_to_lead"
-                                        type="object"
-                                        class="oe_highlight"
-                                        attrs="{'invisible': ['|', ('has_lead_comment', '=', False), ('has_account_relation', '=', True)]}"
-                                    />
-                                </tree>
+                               
+                                    
                             </field>
                         </group>
                         <div class="oe_form_buttons">

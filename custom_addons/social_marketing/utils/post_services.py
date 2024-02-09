@@ -56,9 +56,9 @@ class PostServiceInterface(ABC):
     def delete_post(self, post_id: IdType) -> PostType:
         pass
 
-    @abstractmethod
-    def create_image(self, image_object: ImageObject) -> ImageType:
-        pass
+    # @abstractmethod
+    # def create_image(self, image_object: ImageObject) -> ImageType:
+    #     pass
 
 
 LINKEDIN_API_VERSION = 'v2'
@@ -101,7 +101,7 @@ class LinkedInPostService:
             ) -> None:
         if not message.success:
             if message.field_name not in field_errors:
-                field_errors[message.field_name] = []
+                field_errors[message.field_name] = list()
             field_errors[message.field_name].append(message.text)
 
     def create_post(self, post_object: PostObject) -> PostType:
@@ -158,12 +158,153 @@ class LinkedInPostService:
         return {'status': str(response.status_code)}
 
 
+class InstPostService(PostServiceInterface):
+    API_PREFIX = f'https://graph.facebook.com/{GPAPH_API_VERSION}'
+
+    TEXT_MAX_LENGTH = 63602
+    MAX_LINK_QTY = 5
+
+    def __init__(self, credentials: Dict[str, str]) -> None:
+        self._page_id = credentials['page_id']
+        self._access_token = credentials['access_token']
+
+    def get_post_list_ids(self) -> List[IdType]:
+        return super().get_post_list_ids()
+
+    def create_post(self, post_object: PostObject) -> PostType:
+        pass
+        # разобраться с публикацией картинок в Instagram
+
+        # if post_object.image_objects:
+        #     one_image_object: ImageObject = post_object.image_objects[0]
+        #     params = {
+        #         'access_token': self._access_token,
+        #         'caption': 'EVERYONE HUNTER WANTS TO KNOW WHERE PHASAN IS SITTING DOWN',
+        #         'image_url': 'https://images.squarespace-cdn.com/content/v1/60f1a490a90ed8713c41c36c/1629223610791-LCBJG5451DRKX4WOB4SP/37-design-powers-url-structure.jpeg',
+        #         'media_type': 'IMAGE',
+        #     }
+        #     files = {
+        #         'file': one_image_object.image
+        #     }
+        #     url = f'{self.API_PREFIX}/{self._page_id}/media'
+        #     response = requests.post(
+        #         url=url,
+        #         params=params,
+        #         files=files
+        #     )
+        #     response_data = json.loads(response.text)
+        #     print(response_data)
+
+    def validate_prepare_post_object(self, post_object: PostObject) ->\
+            Dict[FieldName, List[ErrorType]]:
+        return super().validate_prepare_post_object(post_object)
+
+    def get_post_list(self) -> List[PostObject]:
+        post_list_api = self._get_post_list_api()
+        return self._process_post_list_api(post_list_api)
+
+    def _process_post_list_api(self, post_list_api: PostsListType) -> List[PostObject]:
+        post_objects: List[PostObject] = list()
+        for post_data in post_list_api:
+            post_objects.append(self._process_getting_post(post_data))
+        return post_objects
+
+    def _process_getting_post(self, post_data: PostType) -> PostObject:
+        media_url = post_data.get('media_url')
+        if media_url:
+            image_objects = self._process_media(media_url)
+
+        posted_time_str = post_data.get('timestamp')
+        posted_time = datetime.strptime(posted_time_str, '%Y-%m-%dT%H:%M:%S%z')
+        posted_time_naive = posted_time.replace(tzinfo=None)
+
+        message = post_data.get('caption')
+
+        likes_count = post_data.get('like_count')
+        comments_count = post_data.get('comments_count')
+
+        social_id = post_data['id']
+        post_object = PostObject(
+            social_id=social_id,
+            reposts_qty=None,
+            likes_qty=likes_count,
+            views_qty=None,
+            comments_qty=comments_count,
+            message=message,
+
+            state=PostState.posted,
+            account_id=None,
+            image_objects=image_objects,
+            posted_time=posted_time_naive,
+        )
+        return post_object
+
+    def _process_media(self, media_url: AnyUrl) -> List[ImageObject]:
+        result_image_objects: List[ImageObject] = list()
+        media_data_bytes = self._get_media_bytes(media_url)
+        media_data = io.BytesIO(media_data_bytes)
+        media_data_base64 = base64.b64encode(media_data.read()).decode('utf-8')
+        media_data.seek(0)
+
+        image = Image.open(io.BytesIO(media_data_bytes))
+        image_format = image.format.lower()
+        image.close()
+        image_object = ImageObject(
+            social_id=None,
+            format=image_format,
+            image=media_data_base64,
+            name=None,
+            description=None
+        )
+        result_image_objects.append(image_object)
+        return result_image_objects
+
+    def _get_media_bytes(self, url: AnyUrl) -> Optional[bytes]:
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                image_data = response.content
+                return image_data
+        except:
+            return None
+
+    def _get_post_list_api(
+            self,
+            fields: List[FieldName] = [
+                'id',
+                'caption',
+                'timestamp',
+                'media_type',
+                'media_url',
+                'comments_count',
+                'like_count',
+            ]) -> PostsListType:
+        url = f'{self.API_PREFIX}/{self._page_id}/media'
+        params = {
+            'access_token': self._access_token,
+            'fields': ','.join(fields),
+        }
+        response = requests.get(url=url, params=params)
+        response_data = json.loads(response.text)
+        if response_data.get('error'):
+            raise RequestException(response_data['error']['message'])
+        return response_data['data']
+
+    def get_post(self, post_social_id: IdType) -> PostObject:
+        return super().get_post(post_social_id)
+
+    def update_post(self, post_object: PostObject) -> PostType:
+        return super().update_post(post_object)
+
+    def delete_post(self, post_id: IdType) -> PostType:
+        return super().delete_post(post_id)
+
+
 class FBPostService(PostServiceInterface):
     API_PREFIX = f'https://graph.facebook.com/{GPAPH_API_VERSION}'
 
     TEXT_MAX_LENGTH = 63602
     MAX_LINK_QTY = 5
-    MIN_TIMEDELTA_SECS = 600
 
     def __init__(self, credentials: Dict[str, str]) -> None:
         self._page_id = credentials['page_id']
@@ -219,7 +360,7 @@ class FBPostService(PostServiceInterface):
                        field_errors: Dict[FieldName, List[str]]) -> None:
         if not message.success:
             if message.field_name not in field_errors:
-                field_errors[message.field_name] = []
+                field_errors[message.field_name] = list()
             field_errors[message.field_name].append(message.text)
 
     def get_post(self, post_social_id: IdType) -> PostObject:
@@ -253,7 +394,7 @@ class FBPostService(PostServiceInterface):
 
     def _process_getting_post(self, post_data: PostType) -> PostObject:
         attachments_objects = post_data.get('attachments')
-        image_objects: List[ImageObject] = []
+        image_objects: List[ImageObject] = list()
         if attachments_objects:
             attachments_data = attachments_objects['data']
             image_objects = self._process_attachments(attachments_data)
@@ -291,7 +432,7 @@ class FBPostService(PostServiceInterface):
         return post_object
 
     def _process_attachments(self, attachments: List[Dict]) -> List[ImageObject]:
-        result_image_objects: List[ImageObject] = []
+        result_image_objects: List[ImageObject] = list()
         for image in attachments:
             subattachments_objects = image.get('subattachments')
             if subattachments_objects:
@@ -348,6 +489,7 @@ class FBPostService(PostServiceInterface):
 
     def get_post_list(self) -> List[PostObject]:
         post_list_api = self._get_post_list_api()
+        # print(post_list_api)
         return self._process_post_list_api(post_list_api)
 
     def _process_post_list_api(self, post_list_api: PostsListType) -> List[PostObject]:
@@ -380,7 +522,7 @@ class FBPostService(PostServiceInterface):
         return response_data['data']
 
     def update_post(self, post_object: PostObject) -> PostType:
-        media_ids: List[IdType] = []
+        media_ids: List[IdType] = list()
 
         for image_object in post_object.image_objects:
             media_ids.append(image_object.social_id)

@@ -16,6 +16,7 @@ from .post_services import (
     PostServiceInterface,
     FBPostService,
     LinkedInPostService,
+    InstPostService,
 )
 from ..models.accounts import Accounts
 from ..custom_types import (
@@ -53,6 +54,11 @@ class PostRouter:
                 'access_token': acc.li_credentials_id.access_token,
                 'account_urn': acc.li_credentials_id.account_urn
             }
+        elif self._media_type == 'Instagram':
+            return {
+                'access_token': acc.inst_credentials_id.access_token,
+                'page_id': acc.inst_credentials_id.page_id,
+            }
 
     @property
     def service(self) -> PostServiceInterface:
@@ -60,6 +66,8 @@ class PostRouter:
             return FBPostService(self.credentials)
         elif self._media_type == 'LinkedIn':
             return LinkedInPostService(self.credentials)
+        elif self._media_type == 'Instagram':
+            return InstPostService(self.credentials)
 
 
 class PostSynchronizer:
@@ -274,18 +282,21 @@ class PostSynchronizer:
                 format=image_format,
                 image=image_bytes_io,
             )
-            if not image_object.social_id:
-                image_social_id = service.create_image(image_object).get('id')
-                image_record.write({
-                    'social_id': image_social_id,
-                })
-                image_object = ImageObject(
-                    name=f'image.{image_format}',
-                    social_id=image_social_id,
-                    description=None,
-                    format=image_format,
-                    image=image_bytes_io,
-                )
+            try:
+                if not image_object.social_id:
+                    image_social_id = service.create_image(image_object).get('id')
+                    image_record.write({
+                        'social_id': image_social_id,
+                    })
+                    image_object = ImageObject(
+                        name=f'image.{image_format}',
+                        social_id=image_social_id,
+                        description=None,
+                        format=image_format,
+                        image=image_bytes_io,
+                    )
+            except Exception as e:
+                pass
             image_objects.append(image_object)
         return image_objects
 

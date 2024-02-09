@@ -5,19 +5,17 @@
             <field name='name'>Knowledges</field>
         </record>
 
+        <record id="group_knowledges_user" model="res.groups">
+            <field name="name">User</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="category_id" ref="module_category_knowledges"/>
+        </record>
+
         <record id='group_knowledges_admin' model='res.groups'>
             <field name='name'>Knowledges Admin</field>
             <field name='category_id' ref='module_category_knowledges'/>
-        </record>
-
-        <record id='group_knowledges_editor' model='res.groups'>
-            <field name='name'>Knowledges Editor</field>
-            <field name='category_id' ref='module_category_knowledges'/>
-        </record>
-
-        <record id='group_knowledges_viewer' model='res.groups'>
-            <field name='name'>Knowledges Viewer</field>
-            <field name='category_id' ref='module_category_knowledges'/>
+            <!-- <field name="implied_ids" eval="[(4, ref('group_knowledges_user'))]"/> -->
+            <!-- <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/> -->
         </record>
     </data>
 </odoo>

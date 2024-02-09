@@ -8,4 +8,5 @@ from .schemas import (
     LeadDefaultContactFormSchema,
     LeadSubscribeFormSchema,
     LeadBusinessFormSchema,
+    LeadGetQuoteFormSchema,
 )

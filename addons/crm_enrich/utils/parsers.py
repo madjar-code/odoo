@@ -10,7 +10,6 @@ from bs4 import (
 )
 from typing import (
     Set,
-    List,
     Dict,
     Optional,
     TypeAlias,
@@ -22,15 +21,12 @@ from pydantic import (
 )
 from collections import defaultdict
 from http import HTTPStatus
-from selenium import webdriver
 from bs4 import BeautifulSoup
-import undetected_chromedriver as uc
-from selenium.webdriver import Chrome
+from selenium import webdriver
+from selenium.webdriver import ChromeOptions
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+import undetected_chromedriver as uc
+from fake_useragent import UserAgent
 from .keywords import (
     CONTACT_STRINGS,
     SOCIAL_NETWORKS,
@@ -38,10 +34,7 @@ from .keywords import (
 from .enrich_private import (
     LINKEDIN_LOGIN_1,
     LINKEDIN_PASSWORD_1,
-    FACEBOOK_LOGIN_1,
-    FACEBOOK_PASSWORD_1,
     USER_AGENTS,
-    DRIVER_PATH,
 )
 
 
@@ -161,23 +154,17 @@ class WebsitePageParser:
 
 class LinkedInEnrichParser:
     def __init__(self, linkedin_url: HttpUrl) -> None:
-        from selenium import webdriver
         import chromedriver_autoinstaller
 
         chromedriver_autoinstaller.install()
 
-        # options = uc.ChromeOptions()
-        # options.headless = False
-        # user_agent = random.choice(USER_AGENTS)
-        # options.add_argument(f'user-agent={user_agent}')
-        # self.browser = uc.Chrome(options=options)
-        
-        # options = webdriver.ChromeOptions()
-        # user_agent = random.choice(USER_AGENTS)
-        # # options.add_argument('--headless')
-        # options.add_argument(f'user-agent={user_agent}')
-        self.browser = webdriver.Chrome()
-        
+        options = ChromeOptions()
+        # options.headless = True
+
+        user_agent = random.choice(USER_AGENTS)
+        options.add_argument(f'--user-agent={user_agent}')
+
+        self.browser = webdriver.Chrome(options=options)
         self.browser.get(LINKEDIN_LOGIN_URL)
         self.linkedin_url = linkedin_url
         try:
@@ -188,12 +175,13 @@ class LinkedInEnrichParser:
                     self.browser.add_cookie(cookie)
                 except Exception:
                     pass
-            time.sleep(1)
+            time.sleep(2)
         except FileNotFoundError:
             self._linkedin_login()
             with open('cookies/linkedin_cookies.pkl', 'wb') as cookies_file:
                 pickle.dump(self.browser.get_cookies(), cookies_file)
         self.browser.get(linkedin_url)
+        time.sleep(10)
         src = self.browser.page_source
         self.soup = BeautifulSoup(src, LINKEDIN_PARSER)
 
@@ -239,103 +227,5 @@ class LinkedInEnrichParser:
             address_text = address_element.get_text(strip=True)
         return address_text
 
-
-class FacebookParser:
-    def __init__(self, facebook_url: HttpUrl) -> None:
-        service = Service(DRIVER_PATH)
-        options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
-        user_agent = random.choice(USER_AGENTS)
-        options.add_argument(f'user-agent={user_agent}')
-        self.browser = webdriver.Chrome(service=service,
-                                        options=options)
-        self.browser.get(FACEBOOK_LOGIN_URL)
-        self.facebook_url = facebook_url
-
-        try:
-            cookies = pickle.load(open('cookies/facebook_cookies.pkl', 'rb'))
-            for cookie in cookies:
-                cookie['domain'] = '.facebook.com'
-                try:
-                    self.browser.add_cookie(cookie)
-                except Exception:
-                    pass
-        except FileNotFoundError:
-            self._facebook_login()
-            with open('cookies/facebook_cookies.pkl', 'wb') as cookies_file:
-                pickle.dump(self.browser.get_cookies(), cookies_file)
-
-        self.browser.get(facebook_url)
-        src = self.browser.page_source
-        self.soup = BeautifulSoup(src, FACEBOOK_PARSER)
-
-    def _facebook_login(self) -> None:
-        self.browser.get(FACEBOOK_LOGIN_URL)
-        wait = WebDriverWait(self.browser, 30)
-        email = wait.until(EC.visibility_of_element_located((By.NAME, 'email')))
-        email.send_keys(FACEBOOK_LOGIN_1)
-        password = wait.until(EC.visibility_of_element_located((By.NAME, 'pass')))
-        password.send_keys(FACEBOOK_PASSWORD_1)
-        password.send_keys(Keys.RETURN)
-
-    def get_title(self) -> Optional[str]:
-        h1_tag = self.soup.find('h1', class_='x1heor9g x1qlqyl8 x1pd3egz x1a2a7pz')
-        text = None
-        if h1_tag:
-            text = h1_tag.text.strip()
-        return text
-
-    def get_about_info(self) -> Dict[str, Optional[str]]:
-        span_elements: List[Tag] = self.soup.find_all('span')
-        text_list: List[str] = []
-
-        for element in span_elements:
-            element_text = element.get_text(strip=True)
-            if len(element_text) >= 1 and\
-                    element_text not in text_list:
-                text_list.append(element_text)
-        data = {
-            'Address': None,
-            'Website': None,
-            'Mobile': None,
-            'Email': None,
-        }
-        for i, text in enumerate(text_list):
-            if text in data:
-                data[text] = text_list[i-1]
-
-        return data
-
-
-class PersonalFacebookParser(FacebookParser):
-    def get_about_info(self) -> Dict[str, Optional[str | set]]:
-        span_elements: List[Tag] = self.soup.find_all('span')
-        text_list = []
-
-        for element in span_elements:
-            element_text = element.get_text(strip=True)
-            if len(element_text) >= 1 and\
-                    element_text not in text_list:
-                text_list.append(element_text)
-
-        result = {
-            'Website': None,
-            'Mobile': None,
-            'Email': None,
-            'Social Links': set(),
-        }
-
-        SOCIAL_LINKS = {
-            'Instagram': 'https://instagram.com/',
-            'LinkedIn': 'https://linkedin.com/in/',
-        }
-
-        for i, text in enumerate(text_list):
-            if text in result:
-                result[text] = text_list[i-1]
-            if text in SOCIAL_LINKS:
-                social_username: str = text_list[i-1]
-                social_prefix: HttpUrl = SOCIAL_LINKS[text]
-                social_link: HttpUrl = social_prefix + social_username
-                result['Social Links'].add(social_link)
-        return result
+    def _quit(self) -> None:
+        self.browser.quit()
